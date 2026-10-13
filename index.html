@@ -12,17 +12,22 @@
         #page-container {
             transition: transform 0.2s ease;
             transform-origin: top center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
         }
         .page-sheet {
             width: 816px;
-            min-height: 1056px;
+            height: 1056px; /* Altura fija estándar carta para simular páginas reales */
             background: white;
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-            margin: 0 auto;
             padding: 96px;
             outline: none;
             box-sizing: border-box;
             position: relative;
+            overflow: hidden;
+            word-break: break-word;
         }
         .tab-content { display: none; }
         .tab-content.active { display: flex; }
@@ -58,7 +63,7 @@
         <div class="flex justify-between items-center px-4 py-2 border-b border-blue-900 text-sm">
             <div class="flex items-center space-x-3">
                 <div class="bg-white p-1 rounded shadow flex items-center justify-center w-8 h-8 overflow-hidden">
-                    <img src="lumina.jpeg" alt="Logo Lúmina" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/32?text=L'">
+                    <img src="lumina.png" alt="Logo Lúmina" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/32?text=L'">
                 </div>
                 <div class="flex items-center space-x-2">
                     <input type="text" id="doc-title" value="Documento sin título" class="bg-transparent font-medium text-white focus:bg-blue-800 px-2 py-0.5 rounded outline-none border border-transparent focus:border-blue-400">
@@ -67,12 +72,10 @@
 
             <!-- Accesos rápidos y Configuración IA Groq -->
             <div class="flex items-center space-x-4 text-gray-200">
-                <!-- Botón de Llave para API Key de Groq (Lúmina AI) -->
                 <button onclick="configurarApiKey()" title="Configurar API Key de Groq para Lúmina AI" class="bg-amber-600 hover:bg-amber-500 px-2.5 py-1 rounded text-xs font-semibold text-white flex items-center space-x-1 transition shadow">
                     <i class="fa-solid fa-key"></i><span>Lúmina AI Key</span>
                 </button>
 
-                <!-- Menú Guardar -->
                 <div class="relative">
                     <button onclick="toggleGuardarMenu(event)" class="bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded text-xs font-semibold text-white flex items-center space-x-1 transition">
                         <i class="fa-solid fa-floppy-disk mr-1"></i> Guardar <i class="fa-solid fa-chevron-down text-[10px] ml-1"></i>
@@ -235,6 +238,10 @@
                 <i class="fa-solid fa-feather text-indigo-600 text-xl mb-1"></i>
                 <span>Mejorar texto con Lúmina AI</span>
             </button>
+            <button id="ai-btn-alargar" onclick="ejecutarLuminaAI('alargar')" disabled class="flex flex-col items-center p-2 rounded opacity-40 cursor-not-allowed">
+                <i class="fa-solid fa-arrows-alt-v text-indigo-600 text-xl mb-1"></i>
+                <span>Alargar Texto</span>
+            </button>
             <button id="ai-btn-ortografia" onclick="ejecutarLuminaAI('ortografia')" disabled class="flex flex-col items-center p-2 rounded opacity-40 cursor-not-allowed">
                 <i class="fa-solid fa-check-double text-indigo-600 text-xl mb-1"></i>
                 <span>Corregir ortografía con Lúmina AI</span>
@@ -243,10 +250,10 @@
         </div>
     </div>
 
-    <!-- ÁREA DE TRABAJO -->
+    <!-- ÁREA DE TRABAJO (MÚLTIPLES PÁGINAS AUTOMÁTICAS) -->
     <main class="flex-grow overflow-auto p-8 flex justify-center items-start relative">
         <div id="page-container">
-            <div id="editor" contenteditable="true" class="page-sheet focus:outline-none"></div>
+            <div id="editor-page-1" contenteditable="true" class="page-sheet focus:outline-none"></div>
         </div>
     </main>
 
@@ -264,7 +271,7 @@
         </div>
     </footer>
 
-    <!-- VENTANA FLOTANTE DE RESULTADO DE LÚMINA AI -->
+    <!-- VENTANA FLOTANTE DE RESULTADO DE LÚMINA AI (TEXTO LIMPIO) -->
     <div id="modal-ai-resultado" class="hidden fixed inset-0 bg-black/50 flex justify-center items-center z-50">
         <div class="bg-white rounded-xl shadow-2xl w-[500px] max-w-full p-6 border border-indigo-100 flex flex-col">
             <div class="flex justify-between items-center mb-3 pb-2 border-b">
@@ -297,9 +304,61 @@
 
     <!-- SCRIPT PRINCIPAL -->
     <script>
-        const editor = document.getElementById('editor');
         let textoSeleccionadoGlobal = "";
         const selectedGroqModel = "openai/gpt-oss-120b";
+        let paginaActualActiva = document.getElementById('editor-page-1');
+
+        function getActiveEditor() {
+            return paginaActualActiva;
+        }
+
+        document.addEventListener('selectionchange', () => {
+            const seleccion = window.getSelection();
+            if (seleccion.rangeCount > 0) {
+                let node = seleccion.anchorNode;
+                while(node && node !== document.body) {
+                    if(node.classList && node.classList.contains('page-sheet')) {
+                        paginaActualActiva = node;
+                        break;
+                    }
+                    node = node.parentNode;
+                }
+            }
+            const texto = seleccion.toString().trim();
+            const btns = [
+                document.getElementById('ai-btn-resumir'),
+                document.getElementById('ai-btn-mejorar'),
+                document.getElementById('ai-btn-alargar'),
+                document.getElementById('ai-btn-ortografia')
+            ];
+
+            if(texto.length > 0) {
+                textoSeleccionadoGlobal = texto;
+                btns.forEach(btn => {
+                    if(btn) {
+                        btn.removeAttribute('disabled');
+                        btn.classList.remove('opacity-40', 'cursor-not-allowed');
+                        btn.classList.add('hover:bg-indigo-50', 'cursor-pointer');
+                    }
+                });
+            } else {
+                textoSeleccionadoGlobal = "";
+                btns.forEach(btn => {
+                    if(btn) {
+                        btn.setAttribute('disabled', 'true');
+                        btn.classList.add('opacity-40', 'cursor-not-allowed');
+                        btn.classList.remove('hover:bg-indigo-50', 'cursor-pointer');
+                    }
+                });
+            }
+        });
+
+        // Limpiar formato al pegar texto externo
+        document.addEventListener('paste', function (e) {
+            e.preventDefault();
+            const text = e.clipboardData.getData('text/plain');
+            document.execCommand('insertText', false, text);
+        });
 
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -359,12 +418,55 @@
         }
 
         function insertarPaginaEnBlanco() {
-            const salto = document.createElement('div');
-            salto.style.pageBreakAfter = 'always';
-            salto.style.borderBottom = '2px dashed #ccc';
-            salto.style.margin = '20px 0';
-            salto.innerHTML = '<span style="font-size:10px; color:#aaa;">[Salto de Página]</span>';
-            editor.appendChild(salto);
+            crearNuevaPagina();
+        }
+
+        function crearNuevaPagina() {
+            const container = document.getElementById('page-container');
+            const numPaginas = container.querySelectorAll('.page-sheet').length + 1;
+            const nuevaHoja = document.createElement('div');
+            nuevaHoja.id = `editor-page-${numPaginas}`;
+            nuevaHoja.setAttribute('contenteditable', 'true');
+            nuevaHoja.className = 'page-sheet focus:outline-none';
+            container.appendChild(nuevaHoja);
+            paginaActualActiva = nuevaHoja;
+            nuevaHoja.focus();
+            actualizarEstadisticas();
+        }
+
+        // Control de desbordamiento de página automático
+        document.addEventListener('input', (e) => {
+            if(e.target.classList && e.target.classList.contains('page-sheet')) {
+                if(e.target.scrollHeight > e.target.clientHeight) {
+                    // Si el contenido excede la página actual, pasamos el último hijo a una nueva página
+                    let children = e.target.children;
+                    if(children.length > 0) {
+                        let lastChild = children[children.length - 1];
+                        let nextSheet = e.target.nextElementSibling;
+                        if(!nextSheet) {
+                            crearNuevaPagina();
+                            nextSheet = e.target.nextElementSibling;
+                        }
+                        nextSheet.insertBefore(lastChild, nextSheet.firstChild);
+                        nextSheet.focus();
+                    }
+                }
+                actualizarEstadisticas();
+            }
+        });
+
+        function actualizarEstadisticas() {
+            let textoTotal = "";
+            let numPaginas = document.querySelectorAll('.page-sheet').length;
+            document.querySelectorAll('.page-sheet').forEach(sheet => {
+                textoTotal += sheet.innerText + " ";
+            });
+            let textoLimpio = textoTotal.trim();
+            let palabras = textoLimpio === "" ? 0 : textoLimpio.split(/\s+/).length;
+            let caracteres = textoLimpio.length;
+            document.getElementById('word-count').innerText = `Palabras: ${palabras}`;
+            document.getElementById('char-count').innerText = `Caracteres: ${caracteres}`;
+            document.getElementById('page-count').innerText = `Páginas: ${numPaginas}`;
         }
 
         function hacerMovible(elemento) {
@@ -416,7 +518,7 @@
                 tablaHTML += '</table>';
                 wrapper.innerHTML = tablaHTML;
                 hacerMovible(wrapper);
-                editor.appendChild(wrapper);
+                getActiveEditor().appendChild(wrapper);
             }
         }
 
@@ -430,7 +532,7 @@
                 img.style.top = '100px';
                 img.style.left = '50px';
                 hacerMovible(img);
-                editor.appendChild(img);
+                getActiveEditor().appendChild(img);
             }
         }
 
@@ -470,7 +572,7 @@
             });
 
             hacerMovible(div);
-            editor.appendChild(div);
+            getActiveEditor().appendChild(div);
         }
 
         function configurarApiKey() {
@@ -492,32 +594,7 @@
             }
         }
 
-        // Activar / Desactivar botones de IA según selección de texto
-        document.addEventListener('selectionchange', () => {
-            const seleccion = window.getSelection();
-            const texto = seleccion.toString().trim();
-            const btnResumir = document.getElementById('ai-btn-resumir');
-            const btnMejorar = document.getElementById('ai-btn-mejorar');
-            const btnOrtografia = document.getElementById('ai-btn-ortografia');
-
-            if(texto.length > 0) {
-                textoSeleccionadoGlobal = texto;
-                [btnResumir, btnMejorar, btnOrtografia].forEach(btn => {
-                    btn.removeAttribute('disabled');
-                    btn.classList.remove('opacity-40', 'cursor-not-allowed');
-                    btn.classList.add('hover:bg-indigo-50', 'cursor-pointer');
-                });
-            } else {
-                textoSeleccionadoGlobal = "";
-                [btnResumir, btnMejorar, btnOrtografia].forEach(btn => {
-                    btn.setAttribute('disabled', 'true');
-                    btn.classList.add('opacity-40', 'cursor-not-allowed');
-                    btn.classList.remove('hover:bg-indigo-50', 'cursor-pointer');
-                });
-            }
-        });
-
-        // Integración con Lúmina AI usando Groq API
+        // Integración con Lúmina AI usando Groq API (Devolviendo SOLO texto limpio)
         async function ejecutarLuminaAI(accion) {
             let apiKey = localStorage.getItem('lumina_groq_key');
             if(!apiKey) {
@@ -532,9 +609,10 @@
             }
 
             let promptInstruccion = "";
-            if(accion === 'resumir') promptInstruccion = "Resume el siguiente texto de manera concisa:";
-            else if(accion === 'mejorar') promptInstruccion = "Mejora la redacción y estilo del siguiente texto:";
-            else if(accion === 'ortografia') promptInstruccion = "Corrige la ortografía y gramática del siguiente texto:";
+            if(accion === 'resumir') promptInstruccion = "Resume el siguiente texto de manera concisa. Devuelve ÚNICAMENTE el texto resultante limpio, sin introducciones ni comentarios:";
+            else if(accion === 'mejorar') promptInstruccion = "Mejora la redacción y estilo del siguiente texto. Devuelve ÚNICAMENTE el texto resultante limpio, sin introducciones ni comentarios:";
+            else if(accion === 'alargar') promptInstruccion = "Amplía y desarrolla más a fondo el siguiente texto con más detalles y argumentos. Devuelve ÚNICAMENTE el texto resultante limpio, sin introducciones ni comentarios:";
+            else if(accion === 'ortografia') promptInstruccion = "Corrige la ortografía y gramática del siguiente texto. Devuelve ÚNICAMENTE el texto resultante limpio, sin introducciones ni comentarios:";
 
             let promptCompleto = `${promptInstruccion}\n\n"${textoSeleccionadoGlobal}"`;
 
@@ -548,7 +626,7 @@
                     body: JSON.stringify({
                         model: selectedGroqModel,
                         messages: [
-                            { role: "system", content: "Eres Lúmina AI, un asistente de redacción experto y directo." },
+                            { role: "system", content: "Eres Lúmina AI. Devuelve estrictamente el texto solicitado sin saludos, explicaciones, ni etiquetas adicionales." },
                             { role: "user", content: promptCompleto }
                         ]
                     })
@@ -599,10 +677,15 @@
             let nuevoNombre = prompt("Nombre del archivo:", tituloActual);
             if(!nuevoNombre) return;
 
+            let contenidoTotalHTML = "";
+            document.querySelectorAll('.page-sheet').forEach(sheet => {
+                contenidoTotalHTML += sheet.innerHTML + "<br style='page-break-after:always;'>";
+            });
+
             let contenidoWord = `<!DOCTYPE html>
             <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
             <head><meta charset='utf-8'><title>${nuevoNombre}</title></head>
-            <body>${editor.innerHTML}</body></html>`;
+            <body>${contenidoTotalHTML}</body></html>`;
 
             let blob = new Blob(['\ufeff' + contenidoWord], { type: 'application/msword' });
             let enlace = document.createElement('a');
@@ -613,7 +696,7 @@
                 let reemplazar = confirm(`Ya existe un archivo llamado "${nuevoNombre}.doc". ¿Deseas reemplazarlo?`);
                 if(!reemplazar) return;
             }
-            localStorage.setItem(`lumina_file_${nuevoNombre}`, editor.innerHTML);
+            localStorage.setItem(`lumina_file_${nuevoNombre}`, contenidoTotalHTML);
             enlace.click();
             alert(`¡Documento guardado como "${nuevoNombre}.doc" compatible con Word!`);
         }
@@ -623,46 +706,45 @@
         }
 
         function cambiarOrientacion(tipo) {
-            const sheet = document.querySelector('.page-sheet');
+            document.querySelectorAll('.page-sheet').forEach(sheet => {
+                if(tipo === 'horizontal') {
+                    sheet.style.width = '1056px';
+                    sheet.style.height = '816px';
+                } else {
+                    sheet.style.width = '816px';
+                    sheet.style.height = '1056px';
+                }
+            });
             if(tipo === 'horizontal') {
-                sheet.style.width = '1056px';
-                sheet.style.minHeight = '816px';
                 document.getElementById('btn-horiz').className = "px-3 py-1 border rounded bg-blue-50 border-blue-400 text-blue-700 font-medium";
                 document.getElementById('btn-vert').className = "px-3 py-1 border rounded bg-white hover:bg-gray-50";
             } else {
-                sheet.style.width = '816px';
-                sheet.style.minHeight = '1056px';
                 document.getElementById('btn-vert').className = "px-3 py-1 border rounded bg-blue-50 border-blue-400 text-blue-700 font-medium";
                 document.getElementById('btn-horiz').className = "px-3 py-1 border rounded bg-white hover:bg-gray-50";
             }
         }
 
         function cambiarTamanoHoja(tamano) {
-            const sheet = document.querySelector('.page-sheet');
-            if(tamano === 'a4') {
-                sheet.style.width = '794px';
-                sheet.style.minHeight = '1123px';
-            } else if(tamano === 'oficio') {
-                sheet.style.width = '816px';
-                sheet.style.minHeight = '1344px';
-            } else {
-                sheet.style.width = '816px';
-                sheet.style.minHeight = '1056px';
-            }
+            document.querySelectorAll('.page-sheet').forEach(sheet => {
+                if(tamano === 'a4') {
+                    sheet.style.width = '794px';
+                    sheet.style.height = '1123px';
+                } else if(tamano === 'oficio') {
+                    sheet.style.width = '816px';
+                    sheet.style.height = '1344px';
+                } else {
+                    sheet.style.width = '816px';
+                    sheet.style.height = '1056px';
+                }
+            });
         }
 
         function cambiarColumnas(numCols) {
-            editor.style.columnCount = numCols;
-            editor.style.columnGap = '24px';
+            document.querySelectorAll('.page-sheet').forEach(sheet => {
+                sheet.style.columnCount = numCols;
+                sheet.style.columnGap = '24px';
+            });
         }
-
-        editor.addEventListener('input', () => {
-            let texto = editor.innerText.trim();
-            let palabras = texto === "" ? 0 : texto.split(/\s+/).length;
-            let caracteres = texto.length;
-            document.getElementById('word-count').innerText = `Palabras: ${palabras}`;
-            document.getElementById('char-count').innerText = `Caracteres: ${caracteres}`;
-        });
 
         function cambiarZoom(val) {
             document.getElementById('page-container').style.transform = `scale(${val / 100})`;
