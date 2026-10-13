@@ -51,7 +51,7 @@
         }
     </style>
 </head>
-<body class="bg-[#f3f3f3] h-screen flex flex-col overflow-hidden select-none" onclick="ocultarMenuAI()">
+<body class="bg-[#f3f3f3] h-screen flex flex-col overflow-hidden select-none">
 
     <!-- BARRA SUPERIOR (LÚMINA) -->
     <header class="bg-[#1b3764] text-white flex flex-col shadow-md z-20">
@@ -94,6 +94,7 @@
             <button onclick="switchTab('inicio')" id="btn-inicio" class="px-4 py-2 border-b-2 border-white text-white transition">Inicio</button>
             <button onclick="switchTab('insertar')" id="btn-insertar" class="px-4 py-2 border-b-2 border-transparent text-gray-300 hover:text-white transition">Insertar</button>
             <button onclick="switchTab('disposicion')" id="btn-disposicion" class="px-4 py-2 border-b-2 border-transparent text-gray-300 hover:text-white transition">Disposición</button>
+            <button onclick="switchTab('ai')" id="btn-ai" class="px-4 py-2 border-b-2 border-transparent text-gray-300 hover:text-white transition flex items-center gap-1.5"><i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i> AI</button>
         </nav>
     </header>
 
@@ -223,6 +224,23 @@
                 </div>
             </div>
         </div>
+
+        <!-- PESTAÑA AI -->
+        <div id="tab-ai" class="tab-content hidden items-center space-x-6 text-xs text-gray-700 px-4">
+            <button id="ai-btn-resumir" onclick="ejecutarLuminaAI('resumir')" disabled class="flex flex-col items-center p-2 rounded opacity-40 cursor-not-allowed">
+                <i class="fa-solid fa-wand-magic-sparkles text-indigo-600 text-xl mb-1"></i>
+                <span>Resumir con Lúmina AI</span>
+            </button>
+            <button id="ai-btn-mejorar" onclick="ejecutarLuminaAI('mejorar')" disabled class="flex flex-col items-center p-2 rounded opacity-40 cursor-not-allowed">
+                <i class="fa-solid fa-feather text-indigo-600 text-xl mb-1"></i>
+                <span>Mejorar texto con Lúmina AI</span>
+            </button>
+            <button id="ai-btn-ortografia" onclick="ejecutarLuminaAI('ortografia')" disabled class="flex flex-col items-center p-2 rounded opacity-40 cursor-not-allowed">
+                <i class="fa-solid fa-check-double text-indigo-600 text-xl mb-1"></i>
+                <span>Corregir ortografía con Lúmina AI</span>
+            </button>
+            <div class="text-[11px] text-gray-400 italic pl-4 border-l">Selecciona texto en el documento para activar las funciones de Lúmina AI.</div>
+        </div>
     </div>
 
     <!-- ÁREA DE TRABAJO -->
@@ -246,11 +264,19 @@
         </div>
     </footer>
 
-    <!-- MENÚ FLOTANTE LÚMINA AI (AL SELECCIONAR TEXTO) -->
-    <div id="lumina-ai-menu" class="hidden absolute bg-white shadow-xl rounded-lg border border-indigo-200 p-1.5 z-50 flex flex-col space-y-1 text-xs">
-        <button onclick="ejecutarLuminaAI('resumir')" class="text-left px-3 py-1.5 hover:bg-indigo-50 rounded text-indigo-700 font-medium flex items-center"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Resumir con Lúmina AI</button>
-        <button onclick="ejecutarLuminaAI('mejorar')" class="text-left px-3 py-1.5 hover:bg-indigo-50 rounded text-indigo-700 font-medium flex items-center"><i class="fa-solid fa-feather mr-2"></i> Mejorar texto con Lúmina AI</button>
-        <button onclick="ejecutarLuminaAI('ortografia')" class="text-left px-3 py-1.5 hover:bg-indigo-50 rounded text-indigo-700 font-medium flex items-center"><i class="fa-solid fa-check-double mr-2"></i> Corregir ortografía con Lúmina AI</button>
+    <!-- VENTANA FLOTANTE DE RESULTADO DE LÚMINA AI -->
+    <div id="modal-ai-resultado" class="hidden fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl w-[500px] max-w-full p-6 border border-indigo-100 flex flex-col">
+            <div class="flex justify-between items-center mb-3 pb-2 border-b">
+                <h3 class="font-bold text-sm text-indigo-900 flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles text-indigo-600"></i> Resultado de Lúmina AI</h3>
+                <button onclick="cerrarModalAI()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-base"></i></button>
+            </div>
+            <div id="ai-resultado-texto" class="bg-slate-50 border rounded-lg p-4 text-xs text-gray-800 max-h-60 overflow-y-auto mb-4 leading-relaxed whitespace-pre-wrap"></div>
+            <div class="flex justify-end space-x-2">
+                <button onclick="copiarResultadoAI()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition"><i class="fa-regular fa-copy"></i> Copiar texto</button>
+                <button onclick="cerrarModalAI()" class="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded-lg text-xs font-semibold">Cerrar</button>
+            </div>
+        </div>
     </div>
 
     <!-- MODAL SELECCIÓN DE FORMAS -->
@@ -273,7 +299,6 @@
     <script>
         const editor = document.getElementById('editor');
         let textoSeleccionadoGlobal = "";
-        let rangoSeleccionadoGlobal = null;
         const selectedGroqModel = "openai/gpt-oss-120b";
 
         function switchTab(tabName) {
@@ -301,7 +326,6 @@
             selection.getRangeAt(0).insertNode(span);
         }
 
-        // Viñetas y Numeración Directas y Robustas
         function aplicarViñeta() {
             const selection = window.getSelection();
             if (!selection.rangeCount) return;
@@ -343,7 +367,6 @@
             editor.appendChild(salto);
         }
 
-        // Sistema de Arrastre Libre (Drag & Drop para Formas y Tablas)
         function hacerMovible(elemento) {
             let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
             elemento.onmousedown = dragMouseDown;
@@ -450,7 +473,6 @@
             editor.appendChild(div);
         }
 
-        // Configuración API Key Groq (Lúmina AI)
         function configurarApiKey() {
             let keyActual = localStorage.getItem('lumina_groq_key') || '';
             let groqKey = prompt("Ingresa tu API Key de Groq (empieza con gsk_):", keyActual);
@@ -470,36 +492,42 @@
             }
         }
 
-        // Capturar selección de texto mediante evento mouseup (Evita interferir con el menú contextual nativo)
-        editor.addEventListener('mouseup', (e) => {
+        // Activar / Desactivar botones de IA según selección de texto
+        document.addEventListener('selectionchange', () => {
             const seleccion = window.getSelection();
             const texto = seleccion.toString().trim();
-            const menuAI = document.getElementById('lumina-ai-menu');
+            const btnResumir = document.getElementById('ai-btn-resumir');
+            const btnMejorar = document.getElementById('ai-btn-mejorar');
+            const btnOrtografia = document.getElementById('ai-btn-ortografia');
 
             if(texto.length > 0) {
                 textoSeleccionadoGlobal = texto;
-                rangoSeleccionadoGlobal = seleccion.getRangeAt(0);
-                
-                menuAI.style.top = `${e.pageY + 10}px`;
-                menuAI.style.left = `${e.pageX}px`;
-                menuAI.classList.remove('hidden');
-                e.stopPropagation();
+                [btnResumir, btnMejorar, btnOrtografia].forEach(btn => {
+                    btn.removeAttribute('disabled');
+                    btn.classList.remove('opacity-40', 'cursor-not-allowed');
+                    btn.classList.add('hover:bg-indigo-50', 'cursor-pointer');
+                });
             } else {
-                menuAI.classList.add('hidden');
+                textoSeleccionadoGlobal = "";
+                [btnResumir, btnMejorar, btnOrtografia].forEach(btn => {
+                    btn.setAttribute('disabled', 'true');
+                    btn.classList.add('opacity-40', 'cursor-not-allowed');
+                    btn.classList.remove('hover:bg-indigo-50', 'cursor-pointer');
+                });
             }
         });
 
-        function ocultarMenuAI() {
-            document.getElementById('lumina-ai-menu').classList.add('hidden');
-        }
-
         // Integración con Lúmina AI usando Groq API
         async function ejecutarLuminaAI(accion) {
-            ocultarMenuAI();
             let apiKey = localStorage.getItem('lumina_groq_key');
             if(!apiKey) {
                 alert("Por favor, configura primero tu API Key haciendo clic en el icono de la llave (Lúmina AI Key).");
                 configurarApiKey();
+                return;
+            }
+
+            if(!textoSeleccionadoGlobal) {
+                alert("Por favor, selecciona algún texto en el documento primero.");
                 return;
             }
 
@@ -534,10 +562,7 @@
                 let data = await response.json();
                 if(data.choices && data.choices[0].message.content) {
                     let resultadoAI = data.choices[0].message.content.trim();
-                    if(rangoSeleccionadoGlobal) {
-                        rangoSeleccionadoGlobal.deleteContents();
-                        rangoSeleccionadoGlobal.insertNode(document.createTextNode(resultadoAI));
-                    }
+                    mostrarModalAI(resultadoAI);
                 } else {
                     alert("Error al procesar con Lúmina AI. Verifica tu API Key.");
                 }
@@ -547,7 +572,22 @@
             }
         }
 
-        // Guardar y Archivos con formato Word real (.doc)
+        function mostrarModalAI(texto) {
+            document.getElementById('ai-resultado-texto').innerText = texto;
+            document.getElementById('modal-ai-resultado').classList.remove('hidden');
+        }
+
+        function cerrarModalAI() {
+            document.getElementById('modal-ai-resultado').classList.add('hidden');
+        }
+
+        function copiarResultadoAI() {
+            let texto = document.getElementById('ai-resultado-texto').innerText;
+            navigator.clipboard.writeText(texto).then(() => {
+                alert("¡Texto copiado al portapapeles!");
+            });
+        }
+
         function toggleGuardarMenu(e) {
             e.stopPropagation();
             const menu = document.getElementById('guardar-menu');
@@ -559,7 +599,6 @@
             let nuevoNombre = prompt("Nombre del archivo:", tituloActual);
             if(!nuevoNombre) return;
 
-            // Estructura XML/HTML compatible con Microsoft Word (.doc)
             let contenidoWord = `<!DOCTYPE html>
             <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
             <head><meta charset='utf-8'><title>${nuevoNombre}</title></head>
@@ -583,7 +622,6 @@
             window.print();
         }
 
-        // Disposición
         function cambiarOrientacion(tipo) {
             const sheet = document.querySelector('.page-sheet');
             if(tipo === 'horizontal') {
@@ -618,7 +656,6 @@
             editor.style.columnGap = '24px';
         }
 
-        // Estadísticas y Zoom
         editor.addEventListener('input', () => {
             let texto = editor.innerText.trim();
             let palabras = texto === "" ? 0 : texto.split(/\s+/).length;
