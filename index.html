@@ -49,7 +49,7 @@
         .tab-content {
             display: none;
             width: 100%;
-            height: 100%;
+            align-items: center;
         }
         .tab-content.active {
             display: flex;
@@ -161,21 +161,24 @@
         </nav>
     </header>
 
-    <!-- PANELES DE HERRAMIENTAS -->
-    <div class="bg-white border-b border-gray-300 shadow-sm px-6 py-3 z-10 min-h-[105px] flex items-center">
+    <!-- PANELES DE HERRAMIENTAS (SIN SCROLL VERTICAL) -->
+    <div class="bg-white border-b border-gray-300 shadow-sm px-6 py-2.5 z-10 min-h-[95px] flex items-center overflow-hidden">
+        
         <!-- PESTAÑA INICIO -->
-        <div id="tab-inicio" class="tab-content active items-center space-x-8 overflow-x-auto text-xs text-gray-700">
-            <div class="flex flex-col border-r pr-6">
-                <div class="flex items-center space-x-2 mb-2">
-                    <button onclick="document.execCommand('copy')" class="p-2 hover:bg-gray-100 rounded text-gray-700 font-medium flex items-center gap-1" title="Copiar"><i class="fa-regular fa-copy text-sm"></i> Copiar</button>
-                    <button onclick="document.execCommand('cut')" class="p-2 hover:bg-gray-100 rounded text-gray-700 font-medium flex items-center gap-1" title="Cortar"><i class="fa-solid fa-scissors text-sm"></i> Cortar</button>
+        <div id="tab-inicio" class="tab-content active flex justify-start items-center space-x-12 text-xs text-gray-700">
+            <!-- Portapapeles -->
+            <div class="flex flex-col border-r pr-8">
+                <div class="flex items-center space-x-2 mb-1.5">
+                    <button onclick="document.execCommand('copy')" class="p-1.5 hover:bg-gray-100 rounded text-gray-700 font-medium flex items-center gap-1" title="Copiar"><i class="fa-regular fa-copy text-sm"></i> Copiar</button>
+                    <button onclick="document.execCommand('cut')" class="p-1.5 hover:bg-gray-100 rounded text-gray-700 font-medium flex items-center gap-1" title="Cortar"><i class="fa-solid fa-scissors text-sm"></i> Cortar</button>
                 </div>
-                <span class="text-[11px] text-gray-400 font-medium text-center">Portapapeles</span>
+                <span class="text-[10px] text-gray-400 font-medium text-center">Portapapeles</span>
             </div>
 
-            <div class="flex flex-col border-r pr-6 space-y-2">
-                <div class="flex items-center space-x-2">
-                    <select id="font-family" onchange="execCommandParam('fontName', this.value)" class="border rounded px-2 py-1 text-xs bg-gray-50 font-medium">
+            <!-- Fuente -->
+            <div class="flex flex-col border-r pr-8 space-y-1.5">
+                <div class="flex items-center space-x-1.5">
+                    <select id="font-family" onchange="execCommandParam('fontName', this.value)" class="border rounded px-2 py-0.5 text-xs bg-gray-50 font-medium">
                         <option value="Calibri">Calibri</option>
                         <option value="Arial">Arial</option>
                         <option value="Times New Roman">Times New Roman</option>
@@ -184,7 +187,7 @@
                         <option value="Roboto">Roboto</option>
                         <option value="Courier New">Courier New</option>
                     </select>
-                    <select id="font-size" onchange="cambiarTamanoSelect(this.value)" class="border rounded px-2 py-1 text-xs bg-gray-50 w-16 font-medium">
+                    <select id="font-size" onchange="cambiarTamanoSelect(this.value)" class="border rounded px-1.5 py-0.5 text-xs bg-gray-50 w-14 font-medium">
                         <option value="10">10</option>
                         <option value="12" selected>12</option>
                         <option value="14">14</option>
@@ -194,62 +197,63 @@
                         <option value="24">24</option>
                         <option value="32">32</option>
                     </select>
-                    <button onclick="modificarTamanoPunto(1)" class="px-2 py-1 border rounded bg-gray-50 hover:bg-gray-200 font-bold" title="Aumentar 1 punto">A+</button>
-                    <button onclick="modificarTamanoPunto(-1)" class="px-2 py-1 border rounded bg-gray-50 hover:bg-gray-200 font-bold" title="Disminuir 1 punto">A-</button>
+                    <button onclick="modificarTamanoPunto(1)" class="px-1.5 py-0.5 border rounded bg-gray-50 hover:bg-gray-200 font-bold" title="Aumentar 1 punto">A+</button>
+                    <button onclick="modificarTamanoPunto(-1)" class="px-1.5 py-0.5 border rounded bg-gray-50 hover:bg-gray-200 font-bold" title="Disminuir 1 punto">A-</button>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <button onclick="document.execCommand('bold', false, null)" class="p-1.5 hover:bg-gray-200 rounded font-bold px-2"><i class="fa-solid fa-bold"></i></button>
-                    <button onclick="document.execCommand('italic', false, null)" class="p-1.5 hover:bg-gray-200 rounded italic px-2"><i class="fa-solid fa-italic"></i></button>
-                    <button onclick="document.execCommand('underline', false, null)" class="p-1.5 hover:bg-gray-200 rounded underline px-2"><i class="fa-solid fa-underline"></i></button>
+                <div class="flex items-center space-x-1.5">
+                    <button onclick="document.execCommand('bold', false, null)" class="p-1 hover:bg-gray-200 rounded font-bold px-2"><i class="fa-solid fa-bold"></i></button>
+                    <button onclick="document.execCommand('italic', false, null)" class="p-1 hover:bg-gray-200 rounded italic px-2"><i class="fa-solid fa-italic"></i></button>
+                    <button onclick="document.execCommand('underline', false, null)" class="p-1 hover:bg-gray-200 rounded underline px-2"><i class="fa-solid fa-underline"></i></button>
 
                     <div class="relative flex items-center" title="Color de fuente">
-                        <label class="p-1.5 hover:bg-gray-200 rounded cursor-pointer flex items-center text-blue-600 font-bold">
-                            <i class="fa-solid fa-font text-sm"></i>
+                        <label class="p-1 hover:bg-gray-200 rounded cursor-pointer flex items-center text-blue-600 font-bold">
+                            <i class="fa-solid fa-font text-xs"></i>
                             <input type="color" onchange="document.execCommand('foreColor', false, this.value)" class="absolute opacity-0 w-6 h-6 cursor-pointer">
                         </label>
                     </div>
 
                     <div class="relative flex items-center" title="Color de resaltado">
-                        <label class="p-1.5 hover:bg-gray-200 rounded cursor-pointer flex items-center text-amber-500 font-bold">
-                            <i class="fa-solid fa-highlighter text-sm"></i>
+                        <label class="p-1 hover:bg-gray-200 rounded cursor-pointer flex items-center text-amber-500 font-bold">
+                            <i class="fa-solid fa-highlighter text-xs"></i>
                             <input type="color" onchange="document.execCommand('hiliteColor', false, this.value)" class="absolute opacity-0 w-6 h-6 cursor-pointer" value="#ffff00">
                         </label>
                     </div>
                 </div>
-                <span class="text-[11px] text-gray-400 font-medium text-center">Fuente</span>
+                <span class="text-[10px] text-gray-400 font-medium text-center">Fuente</span>
             </div>
 
-            <div class="flex flex-col space-y-2">
-                <div class="flex items-center space-x-2">
-                    <button onclick="aplicarViñeta()" class="p-1.5 hover:bg-gray-200 rounded px-2" title="Viñetas"><i class="fa-solid fa-list"></i></button>
-                    <button onclick="aplicarNumeracion()" class="p-1.5 hover:bg-gray-200 rounded px-2" title="Numeración"><i class="fa-solid fa-list-ol"></i></button>
+            <!-- Párrafo -->
+            <div class="flex flex-col space-y-1.5">
+                <div class="flex items-center space-x-1.5">
+                    <button onclick="aplicarViñeta()" class="p-1 hover:bg-gray-200 rounded px-2" title="Viñetas"><i class="fa-solid fa-list"></i></button>
+                    <button onclick="aplicarNumeracion()" class="p-1 hover:bg-gray-200 rounded px-2" title="Numeración"><i class="fa-solid fa-list-ol"></i></button>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <button onclick="document.execCommand('justifyLeft', false, null)" class="p-1.5 hover:bg-gray-200 rounded px-2" title="Alinear izquierda"><i class="fa-solid fa-align-left"></i></button>
-                    <button onclick="document.execCommand('justifyCenter', false, null)" class="p-1.5 hover:bg-gray-200 rounded px-2" title="Centrar"><i class="fa-solid fa-align-center"></i></button>
-                    <button onclick="document.execCommand('justifyRight', false, null)" class="p-1.5 hover:bg-gray-200 rounded px-2" title="Alinear derecha"><i class="fa-solid fa-align-right"></i></button>
-                    <button onclick="document.execCommand('justifyFull', false, null)" class="p-1.5 hover:bg-gray-200 rounded px-2" title="Justificar"><i class="fa-solid fa-align-justify"></i></button>
+                <div class="flex items-center space-x-1.5">
+                    <button onclick="document.execCommand('justifyLeft', false, null)" class="p-1 hover:bg-gray-200 rounded px-2" title="Alinear izquierda"><i class="fa-solid fa-align-left"></i></button>
+                    <button onclick="document.execCommand('justifyCenter', false, null)" class="p-1 hover:bg-gray-200 rounded px-2" title="Centrar"><i class="fa-solid fa-align-center"></i></button>
+                    <button onclick="document.execCommand('justifyRight', false, null)" class="p-1 hover:bg-gray-200 rounded px-2" title="Alinear derecha"><i class="fa-solid fa-align-right"></i></button>
+                    <button onclick="document.execCommand('justifyFull', false, null)" class="p-1 hover:bg-gray-200 rounded px-2" title="Justificar"><i class="fa-solid fa-align-justify"></i></button>
                 </div>
-                <span class="text-[11px] text-gray-400 font-medium text-center">Párrafo</span>
+                <span class="text-[10px] text-gray-400 font-medium text-center">Párrafo</span>
             </div>
         </div>
 
         <!-- PESTAÑA INSERTAR -->
         <div id="tab-insertar" class="tab-content items-center space-x-8 text-xs text-gray-700">
-            <div class="flex flex-col items-center cursor-pointer hover:bg-gray-100 p-2.5 rounded" onclick="insertarPaginaEnBlanco()">
-                <i class="fa-solid fa-file-circle-plus text-blue-600 text-2xl mb-1"></i>
+            <div class="flex flex-col items-center cursor-pointer hover:bg-gray-100 p-2 rounded" onclick="insertarPaginaEnBlanco()">
+                <i class="fa-solid fa-file-circle-plus text-blue-600 text-xl mb-1"></i>
                 <span>Página en blanco</span>
             </div>
-            <div class="flex flex-col items-center cursor-pointer hover:bg-gray-100 p-2.5 rounded" onclick="insertarTablaFlotante()">
-                <i class="fa-solid fa-table text-emerald-600 text-2xl mb-1"></i>
+            <div class="flex flex-col items-center cursor-pointer hover:bg-gray-100 p-2 rounded" onclick="insertarTablaFlotante()">
+                <i class="fa-solid fa-table text-emerald-600 text-xl mb-1"></i>
                 <span>Tabla</span>
             </div>
-            <div class="flex flex-col items-center cursor-pointer hover:bg-gray-100 p-2.5 rounded" onclick="insertarImagenURL()">
-                <i class="fa-solid fa-image text-amber-600 text-2xl mb-1"></i>
+            <div class="flex flex-col items-center cursor-pointer hover:bg-gray-100 p-2 rounded" onclick="insertarImagenURL()">
+                <i class="fa-solid fa-image text-amber-600 text-xl mb-1"></i>
                 <span>Imagen</span>
             </div>
-            <div class="flex flex-col items-center cursor-pointer hover:bg-gray-100 p-2.5 rounded" onclick="abrirModalFormas()">
-                <i class="fa-solid fa-shapes text-purple-600 text-2xl mb-1"></i>
+            <div class="flex flex-col items-center cursor-pointer hover:bg-gray-100 p-2 rounded" onclick="abrirModalFormas()">
+                <i class="fa-solid fa-shapes text-purple-600 text-xl mb-1"></i>
                 <span>Formas</span>
             </div>
         </div>
@@ -373,7 +377,6 @@
             return paginaActualActiva;
         }
 
-        // ==== ACTUALIZAR PÁGINA ACTIVA CON DELEGACIÓN ====
         document.addEventListener('focusin', (e) => {
             let node = e.target;
             while (node && node !== document.body) {
@@ -385,7 +388,6 @@
             }
         });
 
-        // ==== SELECCIÓN DE TEXTO PARA AI ====
         document.addEventListener('selectionchange', () => {
             const seleccion = window.getSelection();
             if (seleccion.rangeCount > 0) {
@@ -427,7 +429,6 @@
             }
         });
 
-        // ==== PEGADO SANEADO (SIN SANGRÍAS NI ESTILOS EXTERNOS) ====
         const TAGS_PERMITIDOS = new Set([
             'B','STRONG','I','EM','U','S','BR','P','UL','OL','LI',
             'H1','H2','H3','H4','H5','H6','SPAN','DIV'
@@ -444,19 +445,15 @@
                 const temp = document.createElement('div');
                 temp.innerHTML = html;
 
-                // 1) Eliminar etiquetas peligrosas o no deseadas
                 temp.querySelectorAll(
                     'script, style, iframe, object, embed, link, meta, head, title, ' +
                     'form, input, button, textarea, select, svg, img, video, audio, canvas, noscript'
                 ).forEach(el => el.remove());
 
-                // 2) Quitar TODOS los atributos (style, class, id, align, dir, etc.)
                 temp.querySelectorAll('*').forEach(el => {
                     [...el.attributes].forEach(attr => el.removeAttribute(attr.name));
                 });
 
-                // 3) Desenvolver etiquetas no permitidas conservando sus hijos
-                //    (recorremos de nuevo porque el DOM cambió)
                 temp.querySelectorAll('*').forEach(el => {
                     if (!TAGS_PERMITIDOS.has(el.tagName)) {
                         if (['BLOCKQUOTE', 'SECTION', 'ARTICLE', 'MAIN', 'ASIDE',
@@ -469,7 +466,6 @@
                     }
                 });
 
-                // 4) Normalizar <div> a <p> para evitar bloques raros
                 temp.querySelectorAll('div').forEach(div => {
                     const p = document.createElement('p');
                     while (div.firstChild) p.appendChild(div.firstChild);
@@ -487,7 +483,6 @@
             hayCambiosSinGuardar = true;
         });
 
-        // ==== PESTAÑAS ====
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('nav button').forEach(el => {
@@ -505,7 +500,6 @@
             hayCambiosSinGuardar = true;
         }
 
-        // ==== TAMAÑO DE FUENTE SIN ROMPER HTML ====
         function cambiarTamanoSelect(val) {
             const size = parseInt(val);
             document.execCommand('fontSize', false, '7');
@@ -526,7 +520,6 @@
             cambiarTamanoSelect(nuevo);
         }
 
-        // ==== VIÑETAS Y NUMERACIÓN NATIVAS ====
         function aplicarViñeta() {
             document.execCommand('insertUnorderedList', false, null);
             hayCambiosSinGuardar = true;
@@ -537,7 +530,6 @@
             hayCambiosSinGuardar = true;
         }
 
-        // ==== PAGINACIÓN ====
         function insertarPaginaEnBlanco() {
             const nueva = crearNuevaPagina(paginaActualActiva);
             nueva.focus();
@@ -573,7 +565,6 @@
             });
         }
 
-        // ==== AUTO-PAGINADO ====
         document.addEventListener('input', (e) => {
             if (e.target.classList && e.target.classList.contains('page-sheet')) {
                 hayCambiosSinGuardar = true;
@@ -597,7 +588,6 @@
             }
         });
 
-        // ==== ESTADÍSTICAS ====
         function actualizarEstadisticas() {
             let textoTotal = "";
             document.querySelectorAll('.page-sheet').forEach(sheet => {
@@ -612,7 +602,6 @@
             document.getElementById('page-count').innerText = `Páginas: ${numPaginas}`;
         }
 
-        // ==== DRAG DE ELEMENTOS ====
         function hacerMovible(elemento) {
             let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
             elemento.onmousedown = dragMouseDown;
@@ -642,7 +631,6 @@
             }
         }
 
-        // ==== INSERTAR TABLA ====
         function insertarTablaFlotante() {
             let filas = prompt("Número de filas:", "3");
             let columnas = prompt("Número de columnas:", "3");
@@ -668,7 +656,6 @@
             }
         }
 
-        // ==== INSERTAR IMAGEN (con wrapper redimensionable) ====
         function insertarImagenURL() {
             let url = prompt("Introduce la URL de la imagen:");
             if (!url) return;
@@ -690,7 +677,6 @@
             hayCambiosSinGuardar = true;
         }
 
-        // ==== FORMAS ====
         function abrirModalFormas() { document.getElementById('modal-formas').classList.remove('hidden'); }
         function cerrarModalFormas() { document.getElementById('modal-formas').classList.add('hidden'); }
 
@@ -731,7 +717,6 @@
             hayCambiosSinGuardar = true;
         }
 
-        // ==== API KEY ====
         function configurarApiKey() {
             let keyActual = localStorage.getItem('lumina_groq_key') || '';
             let groqKey = prompt("Ingresa tu API Key de Groq (empieza con gsk_):", keyActual);
@@ -751,7 +736,6 @@
             }
         }
 
-        // ==== LÚMINA AI ====
         async function ejecutarLuminaAI(accion) {
             let apiKey = localStorage.getItem('lumina_groq_key');
             if (!apiKey) {
@@ -835,7 +819,6 @@
             });
         }
 
-        // ==== MENÚ GUARDAR ====
         function toggleGuardarMenu(e) {
             e.stopPropagation();
             const menu = document.getElementById('guardar-menu');
@@ -887,7 +870,6 @@
             window.print();
         }
 
-        // ==== AVISO AL CERRAR ====
         window.addEventListener('beforeunload', (e) => {
             if (hayCambiosSinGuardar) {
                 e.preventDefault();
@@ -895,7 +877,6 @@
             }
         });
 
-        // ==== ORIENTACIÓN ====
         function cambiarOrientacion(tipo) {
             document.querySelectorAll('.page-sheet').forEach(sheet => {
                 if (tipo === 'horizontal') {
@@ -915,7 +896,6 @@
             }
         }
 
-        // ==== TAMAÑO DE HOJA ====
         function cambiarTamanoHoja(tamano) {
             document.querySelectorAll('.page-sheet').forEach(sheet => {
                 if (tamano === 'a4') {
@@ -931,7 +911,6 @@
             });
         }
 
-        // ==== COLUMNAS ====
         function cambiarColumnas(numCols) {
             document.querySelectorAll('.page-sheet').forEach(sheet => {
                 sheet.style.columnCount = numCols;
@@ -939,7 +918,6 @@
             });
         }
 
-        // ==== ZOOM ====
         function cambiarZoom(val) {
             document.getElementById('page-container').style.transform = `scale(${val / 100})`;
             document.getElementById('zoom-val').innerText = `${val}%`;
@@ -952,12 +930,10 @@
             cambiarZoom(nuevoVal);
         }
 
-        // ==== TÍTULO ====
         document.getElementById('doc-title').addEventListener('input', () => {
             hayCambiosSinGuardar = true;
         });
 
-        // ==== INICIALIZAR ====
         actualizarEstadisticas();
     </script>
 </body>
