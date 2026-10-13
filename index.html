@@ -29,6 +29,22 @@
             word-break: break-word;
             flex-shrink: 0;
         }
+        /* ==== LIMPIEZA DE PÁRRAFOS HEREDADOS ==== */
+        .page-sheet p {
+            margin: 0;
+            text-indent: 0;
+            padding-left: 0;
+        }
+        .page-sheet blockquote {
+            margin: 0;
+            padding: 0;
+            border: 0;
+        }
+        .page-sheet ul, .page-sheet ol {
+            padding-left: 24px;
+            margin: 0;
+        }
+
         /* ==== PESTAÑAS ==== */
         .tab-content {
             display: none;
@@ -411,23 +427,60 @@
             }
         });
 
-        // ==== PEGADO SANEADO ====
+        // ==== PEGADO SANEADO (SIN SANGRÍAS NI ESTILOS EXTERNOS) ====
+        const TAGS_PERMITIDOS = new Set([
+            'B','STRONG','I','EM','U','S','BR','P','UL','OL','LI',
+            'H1','H2','H3','H4','H5','H6','SPAN','DIV'
+        ]);
+
         document.addEventListener('paste', function (e) {
             e.preventDefault();
             const html = e.clipboardData.getData('text/html');
             const text = e.clipboardData.getData('text/plain');
 
+            let contenidoAInsertar = "";
+
             if (html && html.trim().length > 0) {
                 const temp = document.createElement('div');
                 temp.innerHTML = html;
-                temp.querySelectorAll('script, style, iframe, object, embed, link, meta, head, title, form, input, button, textarea, select').forEach(el => el.remove());
+
+                // 1) Eliminar etiquetas peligrosas o no deseadas
+                temp.querySelectorAll(
+                    'script, style, iframe, object, embed, link, meta, head, title, ' +
+                    'form, input, button, textarea, select, svg, img, video, audio, canvas, noscript'
+                ).forEach(el => el.remove());
+
+                // 2) Quitar TODOS los atributos (style, class, id, align, dir, etc.)
                 temp.querySelectorAll('*').forEach(el => {
-                    [...el.attributes].forEach(attr => {
-                        if (attr.name.startsWith('on')) el.removeAttribute(attr.name);
-                        if (attr.name === 'id') el.removeAttribute(attr.name);
-                    });
+                    [...el.attributes].forEach(attr => el.removeAttribute(attr.name));
                 });
-                document.execCommand('insertHTML', false, temp.innerHTML);
+
+                // 3) Desenvolver etiquetas no permitidas conservando sus hijos
+                //    (recorremos de nuevo porque el DOM cambió)
+                temp.querySelectorAll('*').forEach(el => {
+                    if (!TAGS_PERMITIDOS.has(el.tagName)) {
+                        if (['BLOCKQUOTE', 'SECTION', 'ARTICLE', 'MAIN', 'ASIDE',
+                             'FIGCAPTION', 'PRE', 'CODE', 'FONT', 'CENTER'].includes(el.tagName)) {
+                            const br = document.createElement('br');
+                            el.replaceWith(...el.childNodes, br);
+                        } else {
+                            el.replaceWith(...el.childNodes);
+                        }
+                    }
+                });
+
+                // 4) Normalizar <div> a <p> para evitar bloques raros
+                temp.querySelectorAll('div').forEach(div => {
+                    const p = document.createElement('p');
+                    while (div.firstChild) p.appendChild(div.firstChild);
+                    div.replaceWith(p);
+                });
+
+                contenidoAInsertar = temp.innerHTML;
+            }
+
+            if (contenidoAInsertar && contenidoAInsertar.trim() !== '') {
+                document.execCommand('insertHTML', false, contenidoAInsertar);
             } else {
                 document.execCommand('insertText', false, text);
             }
@@ -455,18 +508,6 @@
         // ==== TAMAÑO DE FUENTE SIN ROMPER HTML ====
         function cambiarTamanoSelect(val) {
             const size = parseInt(val);
-            const sel = window.getSelection();
-            if (!sel.rangeCount || sel.isCollapsed) {
-                // Sin selección: aplicar al futuro texto con un hack
-                document.execCommand('fontSize', false, '7');
-                document.querySelectorAll('font[size="7"]').forEach(font => {
-                    const span = document.createElement('span');
-                    span.style.fontSize = size + 'px';
-                    span.innerHTML = font.innerHTML;
-                    font.parentNode.replaceChild(span, font);
-                });
-                return;
-            }
             document.execCommand('fontSize', false, '7');
             document.querySelectorAll('font[size="7"]').forEach(font => {
                 const span = document.createElement('span');
@@ -543,7 +584,6 @@
                         nextSheet = crearNuevaPagina(e.target);
                     }
                     nextSheet.insertBefore(lastChild, nextSheet.firstChild);
-                    // Mover cursor al inicio de la nueva hoja
                     const range = document.createRange();
                     range.selectNodeContents(nextSheet);
                     range.collapse(true);
@@ -827,6 +867,7 @@
                 <style>
                     @page { size: 21.59cm 27.94cm; margin: 2.54cm; }
                     body { font-family: Calibri, sans-serif; font-size: 11pt; }
+                    p { margin: 0; text-indent: 0; }
                 </style>
             </head>
             <body>${contenidoTotalHTML}</body></html>`;
