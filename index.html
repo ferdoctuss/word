@@ -22,25 +22,36 @@
             padding: 96px;
             outline: none;
             box-sizing: border-box;
+            position: relative;
         }
         .tab-content { display: none; }
         .tab-content.active { display: flex; }
-        /* Estilos para formas editables */
-        .lumina-shape {
-            display: inline-block;
-            position: relative;
+        
+        /* Elementos flotantes (Formas y Tablas) */
+        .lumina-element {
+            position: absolute;
+            cursor: move;
             resize: both;
             overflow: auto;
+            box-sizing: border-box;
+            padding: 8px;
+        }
+        .lumina-shape {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
             min-width: 80px;
             min-height: 60px;
-            padding: 10px;
-            text-align: center;
-            vertical-align: middle;
-            box-sizing: border-box;
+        }
+        .lumina-table-wrapper {
+            display: inline-block;
+            min-width: 150px;
+            min-height: 50px;
         }
     </style>
 </head>
-<body class="bg-[#f3f3f3] h-screen flex flex-col overflow-hidden select-none">
+<body class="bg-[#f3f3f3] h-screen flex flex-col overflow-hidden select-none" onclick="ocultarMenuAI()">
 
     <!-- BARRA SUPERIOR (LÚMINA) -->
     <header class="bg-[#1b3764] text-white flex flex-col shadow-md z-20">
@@ -54,11 +65,16 @@
                 </div>
             </div>
 
-            <!-- Menú Guardar y Utilidades -->
+            <!-- Accesos rápidos y Configuración IA Groq -->
             <div class="flex items-center space-x-4 text-gray-200">
-                <!-- Dropdown Guardar -->
+                <!-- Botón de Llave para API Key de Groq (Lúmina AI) -->
+                <button onclick="configurarApiKey()" title="Configurar API Key de Groq para Lúmina AI" class="bg-amber-600 hover:bg-amber-500 px-2.5 py-1 rounded text-xs font-semibold text-white flex items-center space-x-1 transition shadow">
+                    <i class="fa-solid fa-key"></i><span>Lúmina AI Key</span>
+                </button>
+
+                <!-- Menú Guardar -->
                 <div class="relative">
-                    <button onclick="toggleGuardarMenu()" class="bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded text-xs font-semibold text-white flex items-center space-x-1 transition">
+                    <button onclick="toggleGuardarMenu(event)" class="bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded text-xs font-semibold text-white flex items-center space-x-1 transition">
                         <i class="fa-solid fa-floppy-disk mr-1"></i> Guardar <i class="fa-solid fa-chevron-down text-[10px] ml-1"></i>
                     </button>
                     <div id="guardar-menu" class="hidden absolute right-0 mt-1 w-48 bg-white text-gray-800 rounded shadow-lg py-1 z-30 text-xs">
@@ -86,7 +102,6 @@
         
         <!-- PESTAÑA INICIO -->
         <div id="tab-inicio" class="tab-content active flex items-center space-x-6 overflow-x-auto text-xs text-gray-700">
-            <!-- Portapapeles -->
             <div class="flex flex-col border-r pr-4">
                 <div class="flex items-center space-x-1 mb-1">
                     <button onclick="document.execCommand('copy')" class="p-1.5 hover:bg-gray-100 rounded text-gray-600" title="Copiar"><i class="fa-regular fa-copy text-sm"></i></button>
@@ -106,7 +121,6 @@
                         <option value="Inter">Inter</option>
                         <option value="Roboto">Roboto</option>
                         <option value="Courier New">Courier New</option>
-                        <option value="Comic Sans MS">Comic Sans MS</option>
                     </select>
                     <select id="font-size" onchange="cambiarTamanoFuente(this.value)" class="border rounded px-1 py-0.5 text-xs bg-gray-50 w-12">
                         <option value="10px">10</option>
@@ -123,7 +137,6 @@
                     <button onclick="document.execCommand('italic', false, null)" class="p-1 hover:bg-gray-200 rounded italic w-6"><i class="fa-solid fa-italic"></i></button>
                     <button onclick="document.execCommand('underline', false, null)" class="p-1 hover:bg-gray-200 rounded underline w-6"><i class="fa-solid fa-underline"></i></button>
                     
-                    <!-- Color de Fuente Distinto -->
                     <div class="relative flex items-center" title="Color de fuente">
                         <label class="p-1 hover:bg-gray-200 rounded cursor-pointer flex items-center text-blue-600 font-bold">
                             <i class="fa-solid fa-font"></i>
@@ -131,7 +144,6 @@
                         </label>
                     </div>
 
-                    <!-- Resaltado Distinto -->
                     <div class="relative flex items-center" title="Color de resaltado">
                         <label class="p-1 hover:bg-gray-200 rounded cursor-pointer flex items-center text-amber-500 font-bold">
                             <i class="fa-solid fa-highlighter"></i>
@@ -145,13 +157,13 @@
             <!-- Párrafo -->
             <div class="flex flex-col border-r pr-4 space-y-1">
                 <div class="flex items-center space-x-1">
-                    <button onclick="document.execCommand('insertUnorderedList', false, null)" class="p-1 hover:bg-gray-200 rounded" title="Viñetas"><i class="fa-solid fa-list"></i></button>
-                    <button onclick="document.execCommand('insertOrderedList', false, null)" class="p-1 hover:bg-gray-200 rounded" title="Numeración"><i class="fa-solid fa-list-ol"></i></button>
+                    <button onclick="insertarViñeta()" class="p-1 hover:bg-gray-200 rounded" title="Viñetas"><i class="fa-solid fa-list"></i></button>
+                    <button onclick="insertarNumeracion()" class="p-1 hover:bg-gray-200 rounded" title="Numeración"><i class="fa-solid fa-list-ol"></i></button>
                 </div>
                 <div class="flex items-center space-x-1">
-                    <button onclick="document.execCommand('justifyLeft', false, null)" class="p-1 hover:bg-gray-200 rounded" title="Alinear a la izquierda"><i class="fa-solid fa-align-left"></i></button>
+                    <button onclick="document.execCommand('justifyLeft', false, null)" class="p-1 hover:bg-gray-200 rounded" title="Alinear izquierda"><i class="fa-solid fa-align-left"></i></button>
                     <button onclick="document.execCommand('justifyCenter', false, null)" class="p-1 hover:bg-gray-200 rounded" title="Centrar"><i class="fa-solid fa-align-center"></i></button>
-                    <button onclick="document.execCommand('justifyRight', false, null)" class="p-1 hover:bg-gray-200 rounded" title="Alinear a la derecha"><i class="fa-solid fa-align-right"></i></button>
+                    <button onclick="document.execCommand('justifyRight', false, null)" class="p-1 hover:bg-gray-200 rounded" title="Alinear derecha"><i class="fa-solid fa-align-right"></i></button>
                     <button onclick="document.execCommand('justifyFull', false, null)" class="p-1 hover:bg-gray-200 rounded" title="Justificar"><i class="fa-solid fa-align-justify"></i></button>
                 </div>
                 <span class="text-[10px] text-gray-500 text-center">Párrafo</span>
@@ -164,7 +176,7 @@
                 <i class="fa-solid fa-file-circle-plus text-blue-600 text-xl mb-1"></i>
                 <span>Página en blanco</span>
             </div>
-            <div class="flex flex-col items-center cursor-pointer hover:bg-gray-100 p-2 rounded" onclick="insertarTablaPrompt()">
+            <div class="flex flex-col items-center cursor-pointer hover:bg-gray-100 p-2 rounded" onclick="insertarTablaFlotante()">
                 <i class="fa-solid fa-table text-emerald-600 text-xl mb-1"></i>
                 <span>Tabla</span>
             </div>
@@ -179,8 +191,7 @@
         </div>
 
         <!-- PESTAÑA DISPOSICIÓN -->
-        <div id="tab-disposicion" class="tab-content hidden items-center space-x-8 text-xs text-gray-700">
-            <!-- Orientación -->
+        <div id="tab-disposicion" class="tab-content hidden items-center space-x-8 text-xs text-gray-700 px-6">
             <div class="flex flex-col border-r pr-8 space-y-1">
                 <span class="font-semibold text-gray-500 mb-1">Orientación</span>
                 <div class="flex space-x-2">
@@ -188,7 +199,6 @@
                     <button onclick="cambiarOrientacion('horizontal')" id="btn-horiz" class="px-3 py-1 border rounded bg-white hover:bg-gray-50">Horizontal</button>
                 </div>
             </div>
-            <!-- Tamaño -->
             <div class="flex flex-col border-r pr-8 space-y-1">
                 <span class="font-semibold text-gray-500 mb-1">Tamaño de Hoja</span>
                 <select id="tamano-hoja" onchange="cambiarTamanoHoja(this.value)" class="border rounded px-2 py-1 bg-gray-50">
@@ -197,7 +207,6 @@
                     <option value="oficio">Oficio (21.5 × 35.5 cm)</option>
                 </select>
             </div>
-            <!-- Columnas -->
             <div class="flex flex-col border-r pr-8 space-y-1">
                 <span class="font-semibold text-gray-500 mb-1">Columnas</span>
                 <div class="flex space-x-1">
@@ -206,7 +215,6 @@
                     <button onclick="cambiarColumnas(3)" class="px-2 py-1 border rounded bg-gray-100 hover:bg-gray-200">3 Cols</button>
                 </div>
             </div>
-            <!-- Sangría -->
             <div class="flex flex-col space-y-1">
                 <span class="font-semibold text-gray-500 mb-1">Sangría</span>
                 <div class="flex space-x-1">
@@ -238,17 +246,22 @@
         </div>
     </footer>
 
+    <!-- MENÚ FLOTANTE LÚMINA AI (AL SELECCIONAR TEXTO) -->
+    <div id="lumina-ai-menu" class="hidden absolute bg-white shadow-xl rounded-lg border border-indigo-200 p-1.5 z-50 flex flex-col space-y-1 text-xs">
+        <button onclick="ejecutarLuminaAI('resumir')" class="text-left px-3 py-1.5 hover:bg-indigo-50 rounded text-indigo-700 font-medium flex items-center"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Resumir con Lúmina AI</button>
+        <button onclick="ejecutarLuminaAI('mejorar')" class="text-left px-3 py-1.5 hover:bg-indigo-50 rounded text-indigo-700 font-medium flex items-center"><i class="fa-solid fa-feather mr-2"></i> Mejorar texto con Lúmina AI</button>
+        <button onclick="ejecutarLuminaAI('ortografia')" class="text-left px-3 py-1.5 hover:bg-indigo-50 rounded text-indigo-700 font-medium flex items-center"><i class="fa-solid fa-check-double mr-2"></i> Corregir ortografía con Lúmina AI</button>
+    </div>
+
     <!-- MODAL SELECCIÓN DE FORMAS -->
     <div id="modal-formas" class="hidden fixed inset-0 bg-black/50 flex justify-center items-center z-50">
         <div class="bg-white rounded-lg p-6 w-96 shadow-xl">
             <h3 class="font-bold text-base mb-4 text-gray-800">Seleccionar Forma</h3>
             <div class="grid grid-cols-3 gap-3 mb-4">
-                <button onclick="insertarFormaSeleccionada('cuadrado')" class="p-3 border rounded hover:bg-blue-50 flex flex-col items-center"><div class="w-10 h-10 bg-blue-500 mb-1"></div><span>Cuadrado</span></button>
-                <button onclick="insertarFormaSeleccionada('circulo')" class="p-3 border rounded hover:bg-blue-50 flex flex-col items-center"><div class="w-10 h-10 bg-emerald-500 rounded-full mb-1"></div><span>Círculo</span></button>
-                <button onclick="insertarFormaSeleccionada('rectangulo')" class="p-3 border rounded hover:bg-blue-50 flex flex-col items-center"><div class="w-14 h-8 bg-purple-500 mb-1"></div><span>Rectángulo</span></button>
-                <button onclick="insertarFormaSeleccionada('triangulo')" class="p-3 border rounded hover:bg-blue-50 flex flex-col items-center"><div class="w-0 h-0 border-x-[20px] border-x-transparent border-b-[35px] border-b-amber-500 mb-1"></div><span>Triángulo</span></button>
-                <button onclick="insertarFormaSeleccionada('estrella')" class="p-3 border rounded hover:bg-blue-50 flex flex-col items-center"><i class="fa-solid fa-star text-3xl text-yellow-400 mb-1"></i><span>Estrella</span></button>
-                <button onclick="insertarFormaSeleccionada('corazon')" class="p-3 border rounded hover:bg-blue-50 flex flex-col items-center"><i class="fa-solid fa-heart text-3xl text-rose-500 mb-1"></i><span>Corazón</span></button>
+                <button onclick="insertarFormaFlotante('cuadrado')" class="p-3 border rounded hover:bg-blue-50 flex flex-col items-center"><div class="w-10 h-10 bg-blue-500 mb-1"></div><span>Cuadrado</span></button>
+                <button onclick="insertarFormaFlotante('circulo')" class="p-3 border rounded hover:bg-blue-50 flex flex-col items-center"><div class="w-10 h-10 bg-emerald-500 rounded-full mb-1"></div><span>Círculo</span></button>
+                <button onclick="insertarFormaFlotante('rectangulo')" class="p-3 border rounded hover:bg-blue-50 flex flex-col items-center"><div class="w-14 h-8 bg-purple-500 mb-1"></div><span>Rectángulo</span></button>
+                <button onclick="insertarFormaFlotante('triangulo')" class="p-3 border rounded hover:bg-blue-50 flex flex-col items-center"><div class="w-0 h-0 border-x-[20px] border-x-transparent border-b-[35px] border-b-amber-500 mb-1"></div><span>Triángulo</span></button>
             </div>
             <div class="flex justify-end">
                 <button onclick="cerrarModalFormas()" class="bg-gray-200 hover:bg-gray-300 px-4 py-1.5 rounded text-xs font-semibold">Cancelar</button>
@@ -259,6 +272,9 @@
     <!-- SCRIPT PRINCIPAL -->
     <script>
         const editor = document.getElementById('editor');
+        let textoSeleccionadoGlobal = "";
+        let rangoSeleccionadoGlobal = null;
+        const selectedGroqModel = "openai/gpt-oss-120b"; // Modelo optimizado para Groq
 
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -285,7 +301,14 @@
             selection.getRangeAt(0).insertNode(span);
         }
 
-        // Inserción de elementos
+        // Viñetas y Numeración funcionales
+        function insertarViñeta() {
+            document.execCommand('insertUnorderedList', false, null);
+        }
+        function insertarNumeracion() {
+            document.execCommand('insertOrderedList', false, null);
+        }
+
         function insertarPaginaEnBlanco() {
             const salto = document.createElement('div');
             salto.style.pageBreakAfter = 'always';
@@ -295,27 +318,72 @@
             editor.appendChild(salto);
         }
 
-        function insertarTablaPrompt() {
+        // Sistema de Arrastre Libre (Drag & Drop para Formas y Tablas)
+        function hacerMovible(elemento) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            elemento.onmousedown = dragMouseDown;
+
+            function dragMouseDown(e) {
+                if(e.target.tagName === 'INPUT' || e.target.tagName === 'TD' || e.target.isContentEditable) return;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = cerrarArrastre;
+                document.onmousemove = elementoMoviendose;
+            }
+
+            function elementoMoviendose(e) {
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                elemento.style.top = (elemento.offsetTop - pos2) + "px";
+                elemento.style.left = (elemento.offsetLeft - pos1) + "px";
+            }
+
+            function cerrarArrastre() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
+
+        // Insertar Tabla Flotante con Celdas Redimensionables y Editables
+        function insertarTablaFlotante() {
             let filas = prompt("Número de filas:", "3");
             let columnas = prompt("Número de columnas:", "3");
             if(filas && columnas) {
-                let tablaHTML = '<div style="resize: both; overflow: auto; display: inline-block; border: 2px dashed transparent;"><table style="width:100%; border-collapse: collapse; margin: 10px 0;">';
+                let wrapper = document.createElement('div');
+                wrapper.className = 'lumina-element lumina-table-wrapper';
+                wrapper.style.top = '100px';
+                wrapper.style.left = '50px';
+
+                let tablaHTML = '<table style="width:100%; border-collapse: collapse; background:white;">';
                 for(let i=0; i<parseInt(filas); i++) {
                     tablaHTML += '<tr>';
                     for(let j=0; j<parseInt(columnas); j++) {
-                        tablaHTML += '<td contenteditable="true" style="border: 1px solid #999; padding: 8px; min-width: 40px; min-height: 20px;">&nbsp;</td>';
+                        tablaHTML += '<td contenteditable="true" style="border: 1px solid #777; padding: 6px; min-width: 50px; min-height: 25px;">&nbsp;</td>';
                     }
                     tablaHTML += '</tr>';
                 }
-                tablaHTML += '</table></div><p><br></p>';
-                document.execCommand('insertHTML', false, tablaHTML);
+                tablaHTML += '</table>';
+                wrapper.innerHTML = tablaHTML;
+                hacerMovible(wrapper);
+                editor.appendChild(wrapper);
             }
         }
 
         function insertarImagenURL() {
             let url = prompt("Introduce la URL de la imagen:");
             if(url) {
-                document.execCommand('insertImage', false, url);
+                let img = document.createElement('img');
+                img.src = url;
+                img.className = 'lumina-element';
+                img.style.width = '200px';
+                img.style.top = '100px';
+                img.style.left = '50px';
+                hacerMovible(img);
+                editor.appendChild(img);
             }
         }
 
@@ -323,23 +391,21 @@
         function abrirModalFormas() { document.getElementById('modal-formas').classList.remove('hidden'); }
         function cerrarModalFormas() { document.getElementById('modal-formas').classList.add('hidden'); }
 
-        function insertarFormaSeleccionada(tipo) {
+        function insertarFormaFlotante(tipo) {
             cerrarModalFormas();
             let div = document.createElement('div');
-            div.className = 'lumina-shape';
+            div.className = 'lumina-element lumina-shape';
             div.setAttribute('contenteditable', 'true');
+            div.style.top = '120px';
+            div.style.left = '80px';
             div.style.backgroundColor = 'rgba(59, 130, 246, 0.7)';
             div.style.color = '#ffffff';
-            div.style.margin = '10px';
-            div.innerText = 'Escribe aquí';
+            div.innerText = 'Texto';
 
             if(tipo === 'circulo') {
                 div.style.borderRadius = '50%';
                 div.style.width = '100px';
                 div.style.height = '100px';
-                div.style.display = 'inline-flex';
-                div.style.alignItems = 'center';
-                div.style.justifyContent = 'center';
             } else if(tipo === 'cuadrado') {
                 div.style.width = '100px';
                 div.style.height = '100px';
@@ -350,65 +416,149 @@
                 div.style.width = '100px';
                 div.style.height = '90px';
                 div.style.backgroundColor = 'rgba(245, 158, 11, 0.7)';
-            } else if(tipo === 'estrella') {
-                div.style.width = '100px';
-                div.style.height = '100px';
-                div.innerHTML = '<i class="fa-solid fa-star text-3xl"></i>';
-            } else if(tipo === 'corazon') {
-                div.style.width = '100px';
-                div.style.height = '100px';
-                div.innerHTML = '<i class="fa-solid fa-heart text-3xl"></i>';
             }
 
-            // Permitir cambiar transparencia al hacer doble clic
             div.addEventListener('dblclick', () => {
-                let trans = prompt("Introduce la opacidad de la forma (0.1 a 1.0):", "0.7");
+                let trans = prompt("Introduce la opacidad (0.1 a 1.0):", "0.7");
                 if(trans) div.style.backgroundColor = `rgba(59, 130, 246, ${trans})`;
             });
 
+            hacerMovible(div);
             editor.appendChild(div);
         }
 
-        // Menú Guardar desplegable
-        function toggleGuardarMenu() {
+        // Configuración API Key Groq (Lúmina AI)
+        function configurarApiKey() {
+            let keyActual = localStorage.getItem('lumina_groq_key') || '';
+            let groqKey = prompt("Ingresa tu API Key de Groq (empieza con gsk_):", keyActual);
+            if (groqKey !== null) {
+                const cleanKey = groqKey.trim();
+                if (cleanKey === '') {
+                    localStorage.removeItem('lumina_groq_key');
+                    alert("Se ha borrado la llave guardada.");
+                    return;
+                }
+                if (!cleanKey.startsWith('gsk_')) {
+                    alert("⚠️ Una clave de Groq válida debe empezar con 'gsk_'. Por favor verifica tu llave.");
+                    return;
+                }
+                localStorage.setItem('lumina_groq_key', cleanKey);
+                alert("¡Llave de Groq guardada correctamente!");
+            }
+        }
+
+        // Menú AI al seleccionar texto
+        editor.addEventListener('mouseup', (e) => {
+            const seleccion = window.getSelection();
+            const texto = seleccion.toString().trim();
+            const menuAI = document.getElementById('lumina-ai-menu');
+
+            if(texto.length > 0) {
+                textoSeleccionadoGlobal = texto;
+                rangoSeleccionadoGlobal = seleccion.getRangeAt(0);
+                
+                menuAI.style.top = `${e.pageY + 10}px`;
+                menuAI.style.left = `${e.pageX}px`;
+                menuAI.classList.remove('hidden');
+                e.stopPropagation();
+            } else {
+                menuAI.classList.add('hidden');
+            }
+        });
+
+        function ocultarMenuAI() {
+            document.getElementById('lumina-ai-menu').classList.add('hidden');
+        }
+
+        // Integración con Lúmina AI usando Groq API
+        async function ejecutarLuminaAI(accion) {
+            ocultarMenuAI();
+            let apiKey = localStorage.getItem('lumina_groq_key');
+            if(!apiKey) {
+                alert("Por favor, configura primero tu API Key haciendo clic en el icono de la llave (Lúmina AI Key).");
+                configurarApiKey();
+                return;
+            }
+
+            let promptInstruccion = "";
+            if(accion === 'resumir') promptInstruccion = "Resume el siguiente texto de manera concisa:";
+            else if(accion === 'mejorar') promptInstruccion = "Mejora la redacción y estilo del siguiente texto:";
+            else if(accion === 'ortografia') promptInstruccion = "Corrige la ortografía y gramática del siguiente texto:";
+
+            let promptCompleto = `${promptInstruccion}\n\n"${textoSeleccionadoGlobal}"`;
+
+            try {
+                let response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: selectedGroqModel,
+                        messages: [
+                            { role: "system", content: "Eres Lúmina AI, un asistente de redacción experto y directo." },
+                            { role: "user", content: promptCompleto }
+                        ]
+                    })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error?.message || "Error en la red de Groq");
+                }
+
+                let data = await response.json();
+                if(data.choices && data.choices[0].message.content) {
+                    let resultadoAI = data.choices[0].message.content.trim();
+                    if(rangoSeleccionadoGlobal) {
+                        rangoSeleccionadoGlobal.deleteContents();
+                        rangoSeleccionadoGlobal.insertNode(document.createTextNode(resultadoAI));
+                    }
+                } else {
+                    alert("Error al procesar con Lúmina AI. Verifica tu API Key.");
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Error de conexión con Lúmina AI: " + error.message);
+            }
+        }
+
+        // Guardar y Archivos
+        function toggleGuardarMenu(e) {
+            e.stopPropagation();
             const menu = document.getElementById('guardar-menu');
             menu.classList.toggle('hidden');
         }
 
         function menuGuardarLocal() {
-            toggleGuardarMenu();
             let tituloActual = document.getElementById('doc-title').value || "Documento";
             let nuevoNombre = prompt("Nombre del archivo:", tituloActual);
             if(!nuevoNombre) return;
 
-            let contenidoBlob = new Blob([editor.innerHTML], { type: 'text/html;charset=utf-8' });
             let enlace = document.createElement('a');
-            enlace.href = URL.createObjectURL(contenidoBlob);
+            let blob = new Blob([editor.innerHTML], { type: 'text/html;charset=utf-8' });
+            enlace.href = URL.createObjectURL(blob);
             enlace.download = `${nuevoNombre}.html`;
             
-            // Simular comprobación de existencia
             if(localStorage.getItem(`lumina_file_${nuevoNombre}`)) {
                 let reemplazar = confirm(`Ya existe un archivo llamado "${nuevoNombre}". ¿Deseas reemplazarlo?`);
                 if(!reemplazar) return;
             }
             localStorage.setItem(`lumina_file_${nuevoNombre}`, editor.innerHTML);
             enlace.click();
-            alert(`¡Archivo guardado con éxito como ${nuevoNombre}.html!`);
         }
 
         function menuGuardarComo() {
-            toggleGuardarMenu();
-            let formato = prompt("¿En qué formato deseas guardar? Escribe 'word' o 'pdf':", "word");
+            let formato = prompt("¿Guardar como 'word' o 'pdf'?:", "word");
             let titulo = document.getElementById('doc-title').value || "Lumina_Documento";
-            
             if(formato && formato.toLowerCase() === 'pdf') {
                 window.print();
             } else if(formato) {
                 let contenidoWord = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>${editor.innerHTML}</body></html>`;
                 let blob = new Blob(['\ufeff' + contenidoWord], { type: 'application/msword' });
-                let url = URL.createObjectURL(blob);
                 let a = document.createElement('a');
-                a.href = url;
+                a.href = URL.createObjectURL(blob);
                 a.download = `${titulo}.doc`;
                 a.click();
             }
