@@ -78,8 +78,8 @@
                         <i class="fa-solid fa-floppy-disk mr-1"></i> Guardar <i class="fa-solid fa-chevron-down text-[10px] ml-1"></i>
                     </button>
                     <div id="guardar-menu" class="hidden absolute right-0 mt-1 w-48 bg-white text-gray-800 rounded shadow-lg py-1 z-30 text-xs">
-                        <button onclick="menuGuardarLocal()" class="w-full text-left px-4 py-2 hover:bg-blue-50 flex items-center"><i class="fa-solid fa-computer mr-2 text-blue-600"></i> Guardar en Mac/Windows</button>
-                        <button onclick="menuGuardarComo()" class="w-full text-left px-4 py-2 hover:bg-blue-50 flex items-center"><i class="fa-solid fa-file-arrow-down mr-2 text-emerald-600"></i> Guardar como (Word / PDF)</button>
+                        <button onclick="menuGuardarWord()" class="w-full text-left px-4 py-2 hover:bg-blue-50 flex items-center"><i class="fa-solid fa-file-word mr-2 text-blue-600"></i> Guardar en Mac/Windows (.doc)</button>
+                        <button onclick="menuGuardarComo()" class="w-full text-left px-4 py-2 hover:bg-blue-50 flex items-center"><i class="fa-solid fa-file-pdf mr-2 text-rose-600"></i> Guardar como PDF</button>
                     </div>
                 </div>
 
@@ -157,8 +157,8 @@
             <!-- Párrafo -->
             <div class="flex flex-col border-r pr-4 space-y-1">
                 <div class="flex items-center space-x-1">
-                    <button onclick="insertarViñeta()" class="p-1 hover:bg-gray-200 rounded" title="Viñetas"><i class="fa-solid fa-list"></i></button>
-                    <button onclick="insertarNumeracion()" class="p-1 hover:bg-gray-200 rounded" title="Numeración"><i class="fa-solid fa-list-ol"></i></button>
+                    <button onclick="aplicarViñeta()" class="p-1 hover:bg-gray-200 rounded" title="Viñetas"><i class="fa-solid fa-list"></i></button>
+                    <button onclick="aplicarNumeracion()" class="p-1 hover:bg-gray-200 rounded" title="Numeración"><i class="fa-solid fa-list-ol"></i></button>
                 </div>
                 <div class="flex items-center space-x-1">
                     <button onclick="document.execCommand('justifyLeft', false, null)" class="p-1 hover:bg-gray-200 rounded" title="Alinear izquierda"><i class="fa-solid fa-align-left"></i></button>
@@ -274,7 +274,7 @@
         const editor = document.getElementById('editor');
         let textoSeleccionadoGlobal = "";
         let rangoSeleccionadoGlobal = null;
-        const selectedGroqModel = "openai/gpt-oss-120b"; // Modelo optimizado para Groq
+        const selectedGroqModel = "openai/gpt-oss-120b";
 
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -301,12 +301,37 @@
             selection.getRangeAt(0).insertNode(span);
         }
 
-        // Viñetas y Numeración funcionales
-        function insertarViñeta() {
-            document.execCommand('insertUnorderedList', false, null);
+        // Viñetas y Numeración Directas y Robustas
+        function aplicarViñeta() {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+            const texto = selection.toString() || "Elemento de lista";
+            const ul = document.createElement('ul');
+            ul.style.listStyleType = 'disc';
+            ul.style.marginLeft = '20px';
+            const li = document.createElement('li');
+            li.textContent = texto;
+            ul.appendChild(li);
+            
+            const range = selection.getRangeAt(0);
+            range.deleteContents();
+            range.insertNode(ul);
         }
-        function insertarNumeracion() {
-            document.execCommand('insertOrderedList', false, null);
+
+        function aplicarNumeracion() {
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+            const texto = selection.toString() || "Elemento numerado";
+            const ol = document.createElement('ol');
+            ol.style.listStyleType = 'decimal';
+            ol.style.marginLeft = '20px';
+            const li = document.createElement('li');
+            li.textContent = texto;
+            ol.appendChild(li);
+            
+            const range = selection.getRangeAt(0);
+            range.deleteContents();
+            range.insertNode(ol);
         }
 
         function insertarPaginaEnBlanco() {
@@ -348,7 +373,6 @@
             }
         }
 
-        // Insertar Tabla Flotante con Celdas Redimensionables y Editables
         function insertarTablaFlotante() {
             let filas = prompt("Número de filas:", "3");
             let columnas = prompt("Número de columnas:", "3");
@@ -387,7 +411,6 @@
             }
         }
 
-        // Modal Formas
         function abrirModalFormas() { document.getElementById('modal-formas').classList.remove('hidden'); }
         function cerrarModalFormas() { document.getElementById('modal-formas').classList.add('hidden'); }
 
@@ -447,7 +470,7 @@
             }
         }
 
-        // Menú AI al seleccionar texto
+        // Capturar selección de texto mediante evento mouseup (Evita interferir con el menú contextual nativo)
         editor.addEventListener('mouseup', (e) => {
             const seleccion = window.getSelection();
             const texto = seleccion.toString().trim();
@@ -524,44 +547,40 @@
             }
         }
 
-        // Guardar y Archivos
+        // Guardar y Archivos con formato Word real (.doc)
         function toggleGuardarMenu(e) {
             e.stopPropagation();
             const menu = document.getElementById('guardar-menu');
             menu.classList.toggle('hidden');
         }
 
-        function menuGuardarLocal() {
+        function menuGuardarWord() {
             let tituloActual = document.getElementById('doc-title').value || "Documento";
             let nuevoNombre = prompt("Nombre del archivo:", tituloActual);
             if(!nuevoNombre) return;
 
+            // Estructura XML/HTML compatible con Microsoft Word (.doc)
+            let contenidoWord = `<!DOCTYPE html>
+            <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+            <head><meta charset='utf-8'><title>${nuevoNombre}</title></head>
+            <body>${editor.innerHTML}</body></html>`;
+
+            let blob = new Blob(['\ufeff' + contenidoWord], { type: 'application/msword' });
             let enlace = document.createElement('a');
-            let blob = new Blob([editor.innerHTML], { type: 'text/html;charset=utf-8' });
             enlace.href = URL.createObjectURL(blob);
-            enlace.download = `${nuevoNombre}.html`;
+            enlace.download = `${nuevoNombre}.doc`;
             
             if(localStorage.getItem(`lumina_file_${nuevoNombre}`)) {
-                let reemplazar = confirm(`Ya existe un archivo llamado "${nuevoNombre}". ¿Deseas reemplazarlo?`);
+                let reemplazar = confirm(`Ya existe un archivo llamado "${nuevoNombre}.doc". ¿Deseas reemplazarlo?`);
                 if(!reemplazar) return;
             }
             localStorage.setItem(`lumina_file_${nuevoNombre}`, editor.innerHTML);
             enlace.click();
+            alert(`¡Documento guardado como "${nuevoNombre}.doc" compatible con Word!`);
         }
 
         function menuGuardarComo() {
-            let formato = prompt("¿Guardar como 'word' o 'pdf'?:", "word");
-            let titulo = document.getElementById('doc-title').value || "Lumina_Documento";
-            if(formato && formato.toLowerCase() === 'pdf') {
-                window.print();
-            } else if(formato) {
-                let contenidoWord = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>${editor.innerHTML}</body></html>`;
-                let blob = new Blob(['\ufeff' + contenidoWord], { type: 'application/msword' });
-                let a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = `${titulo}.doc`;
-                a.click();
-            }
+            window.print();
         }
 
         // Disposición
