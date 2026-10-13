@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lúmina - Procesador de Textos</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -19,7 +18,7 @@
         }
         .page-sheet {
             width: 816px;
-            height: 1056px; /* Altura fija estándar carta para simular páginas reales */
+            height: 1056px;
             background: white;
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
             padding: 96px;
@@ -28,11 +27,18 @@
             position: relative;
             overflow: hidden;
             word-break: break-word;
+            flex-shrink: 0;
         }
-        .tab-content { display: none; }
-        .tab-content.active { display: flex; }
-        
-        /* Elementos flotantes (Formas y Tablas) */
+        /* ==== PESTAÑAS ==== */
+        .tab-content {
+            display: none;
+            width: 100%;
+            height: 100%;
+        }
+        .tab-content.active {
+            display: flex;
+        }
+
         .lumina-element {
             position: absolute;
             cursor: move;
@@ -40,6 +46,9 @@
             overflow: auto;
             box-sizing: border-box;
             padding: 8px;
+        }
+        .lumina-element img {
+            pointer-events: none;
         }
         .lumina-shape {
             display: flex;
@@ -53,24 +62,59 @@
             display: inline-block;
             min-width: 150px;
             min-height: 50px;
+            padding: 0;
+        }
+        .lumina-table-wrapper td {
+            outline: none;
+        }
+
+        /* ==== IMPRESIÓN ==== */
+        @media print {
+            @page { margin: 0; }
+            html, body {
+                background: white !important;
+                overflow: visible !important;
+                height: auto !important;
+            }
+            body > *:not(main) { display: none !important; }
+            main {
+                display: block !important;
+                overflow: visible !important;
+                padding: 0 !important;
+                flex: none !important;
+            }
+            #page-container {
+                transform: none !important;
+                gap: 0 !important;
+                display: block !important;
+            }
+            .page-sheet {
+                box-shadow: none !important;
+                margin: 0 auto !important;
+                page-break-after: always;
+                break-after: page;
+            }
+            .page-sheet:last-child {
+                page-break-after: auto;
+                break-after: auto;
+            }
         }
     </style>
 </head>
 <body class="bg-[#f3f3f3] h-screen flex flex-col overflow-hidden select-none">
 
-    <!-- BARRA SUPERIOR (LÚMINA) -->
+    <!-- BARRA SUPERIOR -->
     <header class="bg-[#1b3764] text-white flex flex-col shadow-md z-20">
         <div class="flex justify-between items-center px-4 py-2 border-b border-blue-900 text-sm">
             <div class="flex items-center space-x-3">
-                <div class="bg-white p-1 rounded shadow flex items-center justify-center w-8 h-8 overflow-hidden">
-                    <img src="lumina.png" alt="Logo Lúmina" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/32?text=L'">
+                <div class="p-1 rounded flex items-center justify-center w-8 h-8 overflow-hidden bg-transparent">
+                    <img src="lumina.png" alt="Logo Lúmina" class="w-full h-full object-contain" onerror="this.src='https://via.placeholder.com/32?text=L'">
                 </div>
                 <div class="flex items-center space-x-2">
                     <input type="text" id="doc-title" value="Documento sin título" class="bg-transparent font-medium text-white focus:bg-blue-800 px-2 py-0.5 rounded outline-none border border-transparent focus:border-blue-400">
                 </div>
             </div>
 
-            <!-- Accesos rápidos y Configuración IA Groq -->
             <div class="flex items-center space-x-4 text-gray-200">
                 <button onclick="configurarApiKey()" title="Configurar API Key de Groq para Lúmina AI" class="bg-amber-600 hover:bg-amber-500 px-2.5 py-1 rounded text-xs font-semibold text-white flex items-center space-x-1 transition shadow">
                     <i class="fa-solid fa-key"></i><span>Lúmina AI Key</span>
@@ -80,7 +124,7 @@
                     <button onclick="toggleGuardarMenu(event)" class="bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded text-xs font-semibold text-white flex items-center space-x-1 transition">
                         <i class="fa-solid fa-floppy-disk mr-1"></i> Guardar <i class="fa-solid fa-chevron-down text-[10px] ml-1"></i>
                     </button>
-                    <div id="guardar-menu" class="hidden absolute right-0 mt-1 w-48 bg-white text-gray-800 rounded shadow-lg py-1 z-30 text-xs">
+                    <div id="guardar-menu" class="hidden absolute right-0 mt-1 w-56 bg-white text-gray-800 rounded shadow-lg py-1 z-30 text-xs">
                         <button onclick="menuGuardarWord()" class="w-full text-left px-4 py-2 hover:bg-blue-50 flex items-center"><i class="fa-solid fa-file-word mr-2 text-blue-600"></i> Guardar en Mac/Windows (.doc)</button>
                         <button onclick="menuGuardarComo()" class="w-full text-left px-4 py-2 hover:bg-blue-50 flex items-center"><i class="fa-solid fa-file-pdf mr-2 text-rose-600"></i> Guardar como PDF</button>
                     </div>
@@ -101,23 +145,21 @@
         </nav>
     </header>
 
-    <!-- PANELES DE HERRAMIENTAS (CINTA) -->
-    <div class="bg-white border-b border-gray-300 shadow-sm px-4 py-2 z-10 min-h-[95px] flex items-center">
-        
+    <!-- PANELES DE HERRAMIENTAS -->
+    <div class="bg-white border-b border-gray-300 shadow-sm px-6 py-3 z-10 min-h-[105px] flex items-center">
         <!-- PESTAÑA INICIO -->
-        <div id="tab-inicio" class="tab-content active flex items-center space-x-6 overflow-x-auto text-xs text-gray-700">
-            <div class="flex flex-col border-r pr-4">
-                <div class="flex items-center space-x-1 mb-1">
-                    <button onclick="document.execCommand('copy')" class="p-1.5 hover:bg-gray-100 rounded text-gray-600" title="Copiar"><i class="fa-regular fa-copy text-sm"></i></button>
-                    <button onclick="document.execCommand('cut')" class="p-1.5 hover:bg-gray-100 rounded text-gray-600" title="Cortar"><i class="fa-solid fa-scissors text-sm"></i></button>
+        <div id="tab-inicio" class="tab-content active items-center space-x-8 overflow-x-auto text-xs text-gray-700">
+            <div class="flex flex-col border-r pr-6">
+                <div class="flex items-center space-x-2 mb-2">
+                    <button onclick="document.execCommand('copy')" class="p-2 hover:bg-gray-100 rounded text-gray-700 font-medium flex items-center gap-1" title="Copiar"><i class="fa-regular fa-copy text-sm"></i> Copiar</button>
+                    <button onclick="document.execCommand('cut')" class="p-2 hover:bg-gray-100 rounded text-gray-700 font-medium flex items-center gap-1" title="Cortar"><i class="fa-solid fa-scissors text-sm"></i> Cortar</button>
                 </div>
-                <span class="text-[10px] text-gray-500 text-center">Portapapeles</span>
+                <span class="text-[11px] text-gray-400 font-medium text-center">Portapapeles</span>
             </div>
 
-            <!-- Fuente -->
-            <div class="flex flex-col border-r pr-4 space-y-1">
-                <div class="flex items-center space-x-1">
-                    <select id="font-family" onchange="execCommandParam('fontName', this.value)" class="border rounded px-1 py-0.5 text-xs bg-gray-50">
+            <div class="flex flex-col border-r pr-6 space-y-2">
+                <div class="flex items-center space-x-2">
+                    <select id="font-family" onchange="execCommandParam('fontName', this.value)" class="border rounded px-2 py-1 text-xs bg-gray-50 font-medium">
                         <option value="Calibri">Calibri</option>
                         <option value="Arial">Arial</option>
                         <option value="Times New Roman">Times New Roman</option>
@@ -126,76 +168,78 @@
                         <option value="Roboto">Roboto</option>
                         <option value="Courier New">Courier New</option>
                     </select>
-                    <select id="font-size" onchange="cambiarTamanoFuente(this.value)" class="border rounded px-1 py-0.5 text-xs bg-gray-50 w-12">
-                        <option value="10px">10</option>
-                        <option value="12px" selected>12</option>
-                        <option value="14px">14</option>
-                        <option value="16px">16</option>
-                        <option value="18px">18</option>
-                        <option value="24px">24</option>
-                        <option value="32px">32</option>
+                    <select id="font-size" onchange="cambiarTamanoSelect(this.value)" class="border rounded px-2 py-1 text-xs bg-gray-50 w-16 font-medium">
+                        <option value="10">10</option>
+                        <option value="12" selected>12</option>
+                        <option value="14">14</option>
+                        <option value="16">16</option>
+                        <option value="18">18</option>
+                        <option value="20">20</option>
+                        <option value="24">24</option>
+                        <option value="32">32</option>
                     </select>
+                    <button onclick="modificarTamanoPunto(1)" class="px-2 py-1 border rounded bg-gray-50 hover:bg-gray-200 font-bold" title="Aumentar 1 punto">A+</button>
+                    <button onclick="modificarTamanoPunto(-1)" class="px-2 py-1 border rounded bg-gray-50 hover:bg-gray-200 font-bold" title="Disminuir 1 punto">A-</button>
                 </div>
-                <div class="flex items-center space-x-1">
-                    <button onclick="document.execCommand('bold', false, null)" class="p-1 hover:bg-gray-200 rounded font-bold w-6"><i class="fa-solid fa-bold"></i></button>
-                    <button onclick="document.execCommand('italic', false, null)" class="p-1 hover:bg-gray-200 rounded italic w-6"><i class="fa-solid fa-italic"></i></button>
-                    <button onclick="document.execCommand('underline', false, null)" class="p-1 hover:bg-gray-200 rounded underline w-6"><i class="fa-solid fa-underline"></i></button>
-                    
+                <div class="flex items-center space-x-2">
+                    <button onclick="document.execCommand('bold', false, null)" class="p-1.5 hover:bg-gray-200 rounded font-bold px-2"><i class="fa-solid fa-bold"></i></button>
+                    <button onclick="document.execCommand('italic', false, null)" class="p-1.5 hover:bg-gray-200 rounded italic px-2"><i class="fa-solid fa-italic"></i></button>
+                    <button onclick="document.execCommand('underline', false, null)" class="p-1.5 hover:bg-gray-200 rounded underline px-2"><i class="fa-solid fa-underline"></i></button>
+
                     <div class="relative flex items-center" title="Color de fuente">
-                        <label class="p-1 hover:bg-gray-200 rounded cursor-pointer flex items-center text-blue-600 font-bold">
-                            <i class="fa-solid fa-font"></i>
+                        <label class="p-1.5 hover:bg-gray-200 rounded cursor-pointer flex items-center text-blue-600 font-bold">
+                            <i class="fa-solid fa-font text-sm"></i>
                             <input type="color" onchange="document.execCommand('foreColor', false, this.value)" class="absolute opacity-0 w-6 h-6 cursor-pointer">
                         </label>
                     </div>
 
                     <div class="relative flex items-center" title="Color de resaltado">
-                        <label class="p-1 hover:bg-gray-200 rounded cursor-pointer flex items-center text-amber-500 font-bold">
-                            <i class="fa-solid fa-highlighter"></i>
+                        <label class="p-1.5 hover:bg-gray-200 rounded cursor-pointer flex items-center text-amber-500 font-bold">
+                            <i class="fa-solid fa-highlighter text-sm"></i>
                             <input type="color" onchange="document.execCommand('hiliteColor', false, this.value)" class="absolute opacity-0 w-6 h-6 cursor-pointer" value="#ffff00">
                         </label>
                     </div>
                 </div>
-                <span class="text-[10px] text-gray-500 text-center">Fuente</span>
+                <span class="text-[11px] text-gray-400 font-medium text-center">Fuente</span>
             </div>
 
-            <!-- Párrafo -->
-            <div class="flex flex-col border-r pr-4 space-y-1">
-                <div class="flex items-center space-x-1">
-                    <button onclick="aplicarViñeta()" class="p-1 hover:bg-gray-200 rounded" title="Viñetas"><i class="fa-solid fa-list"></i></button>
-                    <button onclick="aplicarNumeracion()" class="p-1 hover:bg-gray-200 rounded" title="Numeración"><i class="fa-solid fa-list-ol"></i></button>
+            <div class="flex flex-col space-y-2">
+                <div class="flex items-center space-x-2">
+                    <button onclick="aplicarViñeta()" class="p-1.5 hover:bg-gray-200 rounded px-2" title="Viñetas"><i class="fa-solid fa-list"></i></button>
+                    <button onclick="aplicarNumeracion()" class="p-1.5 hover:bg-gray-200 rounded px-2" title="Numeración"><i class="fa-solid fa-list-ol"></i></button>
                 </div>
-                <div class="flex items-center space-x-1">
-                    <button onclick="document.execCommand('justifyLeft', false, null)" class="p-1 hover:bg-gray-200 rounded" title="Alinear izquierda"><i class="fa-solid fa-align-left"></i></button>
-                    <button onclick="document.execCommand('justifyCenter', false, null)" class="p-1 hover:bg-gray-200 rounded" title="Centrar"><i class="fa-solid fa-align-center"></i></button>
-                    <button onclick="document.execCommand('justifyRight', false, null)" class="p-1 hover:bg-gray-200 rounded" title="Alinear derecha"><i class="fa-solid fa-align-right"></i></button>
-                    <button onclick="document.execCommand('justifyFull', false, null)" class="p-1 hover:bg-gray-200 rounded" title="Justificar"><i class="fa-solid fa-align-justify"></i></button>
+                <div class="flex items-center space-x-2">
+                    <button onclick="document.execCommand('justifyLeft', false, null)" class="p-1.5 hover:bg-gray-200 rounded px-2" title="Alinear izquierda"><i class="fa-solid fa-align-left"></i></button>
+                    <button onclick="document.execCommand('justifyCenter', false, null)" class="p-1.5 hover:bg-gray-200 rounded px-2" title="Centrar"><i class="fa-solid fa-align-center"></i></button>
+                    <button onclick="document.execCommand('justifyRight', false, null)" class="p-1.5 hover:bg-gray-200 rounded px-2" title="Alinear derecha"><i class="fa-solid fa-align-right"></i></button>
+                    <button onclick="document.execCommand('justifyFull', false, null)" class="p-1.5 hover:bg-gray-200 rounded px-2" title="Justificar"><i class="fa-solid fa-align-justify"></i></button>
                 </div>
-                <span class="text-[10px] text-gray-500 text-center">Párrafo</span>
+                <span class="text-[11px] text-gray-400 font-medium text-center">Párrafo</span>
             </div>
         </div>
 
         <!-- PESTAÑA INSERTAR -->
-        <div id="tab-insertar" class="tab-content hidden items-center space-x-6 text-xs text-gray-700">
-            <div class="flex flex-col items-center cursor-pointer hover:bg-gray-100 p-2 rounded" onclick="insertarPaginaEnBlanco()">
-                <i class="fa-solid fa-file-circle-plus text-blue-600 text-xl mb-1"></i>
+        <div id="tab-insertar" class="tab-content items-center space-x-8 text-xs text-gray-700">
+            <div class="flex flex-col items-center cursor-pointer hover:bg-gray-100 p-2.5 rounded" onclick="insertarPaginaEnBlanco()">
+                <i class="fa-solid fa-file-circle-plus text-blue-600 text-2xl mb-1"></i>
                 <span>Página en blanco</span>
             </div>
-            <div class="flex flex-col items-center cursor-pointer hover:bg-gray-100 p-2 rounded" onclick="insertarTablaFlotante()">
-                <i class="fa-solid fa-table text-emerald-600 text-xl mb-1"></i>
+            <div class="flex flex-col items-center cursor-pointer hover:bg-gray-100 p-2.5 rounded" onclick="insertarTablaFlotante()">
+                <i class="fa-solid fa-table text-emerald-600 text-2xl mb-1"></i>
                 <span>Tabla</span>
             </div>
-            <div class="flex flex-col items-center cursor-pointer hover:bg-gray-100 p-2 rounded" onclick="insertarImagenURL()">
-                <i class="fa-solid fa-image text-amber-600 text-xl mb-1"></i>
+            <div class="flex flex-col items-center cursor-pointer hover:bg-gray-100 p-2.5 rounded" onclick="insertarImagenURL()">
+                <i class="fa-solid fa-image text-amber-600 text-2xl mb-1"></i>
                 <span>Imagen</span>
             </div>
-            <div class="flex flex-col items-center cursor-pointer hover:bg-gray-100 p-2 rounded" onclick="abrirModalFormas()">
-                <i class="fa-solid fa-shapes text-purple-600 text-xl mb-1"></i>
+            <div class="flex flex-col items-center cursor-pointer hover:bg-gray-100 p-2.5 rounded" onclick="abrirModalFormas()">
+                <i class="fa-solid fa-shapes text-purple-600 text-2xl mb-1"></i>
                 <span>Formas</span>
             </div>
         </div>
 
         <!-- PESTAÑA DISPOSICIÓN -->
-        <div id="tab-disposicion" class="tab-content hidden items-center space-x-8 text-xs text-gray-700 px-6">
+        <div id="tab-disposicion" class="tab-content items-center space-x-8 text-xs text-gray-700 px-6">
             <div class="flex flex-col border-r pr-8 space-y-1">
                 <span class="font-semibold text-gray-500 mb-1">Orientación</span>
                 <div class="flex space-x-2">
@@ -229,28 +273,28 @@
         </div>
 
         <!-- PESTAÑA AI -->
-        <div id="tab-ai" class="tab-content hidden items-center space-x-6 text-xs text-gray-700 px-4">
+        <div id="tab-ai" class="tab-content items-center space-x-6 text-xs text-gray-700 px-4">
             <button id="ai-btn-resumir" onclick="ejecutarLuminaAI('resumir')" disabled class="flex flex-col items-center p-2 rounded opacity-40 cursor-not-allowed">
                 <i class="fa-solid fa-wand-magic-sparkles text-indigo-600 text-xl mb-1"></i>
-                <span>Resumir con Lúmina AI</span>
+                <span id="txt-resumir">Resumir con Lúmina AI</span>
             </button>
             <button id="ai-btn-mejorar" onclick="ejecutarLuminaAI('mejorar')" disabled class="flex flex-col items-center p-2 rounded opacity-40 cursor-not-allowed">
                 <i class="fa-solid fa-feather text-indigo-600 text-xl mb-1"></i>
-                <span>Mejorar texto con Lúmina AI</span>
+                <span id="txt-mejorar">Mejorar texto con Lúmina AI</span>
             </button>
             <button id="ai-btn-alargar" onclick="ejecutarLuminaAI('alargar')" disabled class="flex flex-col items-center p-2 rounded opacity-40 cursor-not-allowed">
                 <i class="fa-solid fa-arrows-alt-v text-indigo-600 text-xl mb-1"></i>
-                <span>Alargar Texto</span>
+                <span id="txt-alargar">Alargar Texto</span>
             </button>
             <button id="ai-btn-ortografia" onclick="ejecutarLuminaAI('ortografia')" disabled class="flex flex-col items-center p-2 rounded opacity-40 cursor-not-allowed">
                 <i class="fa-solid fa-check-double text-indigo-600 text-xl mb-1"></i>
-                <span>Corregir ortografía con Lúmina AI</span>
+                <span id="txt-ortografia">Corregir ortografía con Lúmina AI</span>
             </button>
             <div class="text-[11px] text-gray-400 italic pl-4 border-l">Selecciona texto en el documento para activar las funciones de Lúmina AI.</div>
         </div>
     </div>
 
-    <!-- ÁREA DE TRABAJO (MÚLTIPLES PÁGINAS AUTOMÁTICAS) -->
+    <!-- ÁREA DE TRABAJO -->
     <main class="flex-grow overflow-auto p-8 flex justify-center items-start relative">
         <div id="page-container">
             <div id="editor-page-1" contenteditable="true" class="page-sheet focus:outline-none"></div>
@@ -271,7 +315,7 @@
         </div>
     </footer>
 
-    <!-- VENTANA FLOTANTE DE RESULTADO DE LÚMINA AI (TEXTO LIMPIO) -->
+    <!-- MODAL RESULTADO AI -->
     <div id="modal-ai-resultado" class="hidden fixed inset-0 bg-black/50 flex justify-center items-center z-50">
         <div class="bg-white rounded-xl shadow-2xl w-[500px] max-w-full p-6 border border-indigo-100 flex flex-col">
             <div class="flex justify-between items-center mb-3 pb-2 border-b">
@@ -286,7 +330,7 @@
         </div>
     </div>
 
-    <!-- MODAL SELECCIÓN DE FORMAS -->
+    <!-- MODAL FORMAS -->
     <div id="modal-formas" class="hidden fixed inset-0 bg-black/50 flex justify-center items-center z-50">
         <div class="bg-white rounded-lg p-6 w-96 shadow-xl">
             <h3 class="font-bold text-base mb-4 text-gray-800">Seleccionar Forma</h3>
@@ -307,17 +351,31 @@
         let textoSeleccionadoGlobal = "";
         const selectedGroqModel = "openai/gpt-oss-120b";
         let paginaActualActiva = document.getElementById('editor-page-1');
+        let hayCambiosSinGuardar = false;
 
         function getActiveEditor() {
             return paginaActualActiva;
         }
 
+        // ==== ACTUALIZAR PÁGINA ACTIVA CON DELEGACIÓN ====
+        document.addEventListener('focusin', (e) => {
+            let node = e.target;
+            while (node && node !== document.body) {
+                if (node.classList && node.classList.contains('page-sheet')) {
+                    paginaActualActiva = node;
+                    return;
+                }
+                node = node.parentNode;
+            }
+        });
+
+        // ==== SELECCIÓN DE TEXTO PARA AI ====
         document.addEventListener('selectionchange', () => {
             const seleccion = window.getSelection();
             if (seleccion.rangeCount > 0) {
                 let node = seleccion.anchorNode;
-                while(node && node !== document.body) {
-                    if(node.classList && node.classList.contains('page-sheet')) {
+                while (node && node !== document.body) {
+                    if (node.classList && node.classList.contains('page-sheet')) {
                         paginaActualActiva = node;
                         break;
                     }
@@ -332,10 +390,10 @@
                 document.getElementById('ai-btn-ortografia')
             ];
 
-            if(texto.length > 0) {
+            if (texto.length > 0) {
                 textoSeleccionadoGlobal = texto;
                 btns.forEach(btn => {
-                    if(btn) {
+                    if (btn) {
                         btn.removeAttribute('disabled');
                         btn.classList.remove('opacity-40', 'cursor-not-allowed');
                         btn.classList.add('hover:bg-indigo-50', 'cursor-pointer');
@@ -344,7 +402,7 @@
             } else {
                 textoSeleccionadoGlobal = "";
                 btns.forEach(btn => {
-                    if(btn) {
+                    if (btn) {
                         btn.setAttribute('disabled', 'true');
                         btn.classList.add('opacity-40', 'cursor-not-allowed');
                         btn.classList.remove('hover:bg-indigo-50', 'cursor-pointer');
@@ -353,13 +411,30 @@
             }
         });
 
-        // Limpiar formato al pegar texto externo
+        // ==== PEGADO SANEADO ====
         document.addEventListener('paste', function (e) {
             e.preventDefault();
+            const html = e.clipboardData.getData('text/html');
             const text = e.clipboardData.getData('text/plain');
-            document.execCommand('insertText', false, text);
+
+            if (html && html.trim().length > 0) {
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                temp.querySelectorAll('script, style, iframe, object, embed, link, meta, head, title, form, input, button, textarea, select').forEach(el => el.remove());
+                temp.querySelectorAll('*').forEach(el => {
+                    [...el.attributes].forEach(attr => {
+                        if (attr.name.startsWith('on')) el.removeAttribute(attr.name);
+                        if (attr.name === 'id') el.removeAttribute(attr.name);
+                    });
+                });
+                document.execCommand('insertHTML', false, temp.innerHTML);
+            } else {
+                document.execCommand('insertText', false, text);
+            }
+            hayCambiosSinGuardar = true;
         });
 
+        // ==== PESTAÑAS ====
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('nav button').forEach(el => {
@@ -374,107 +449,136 @@
 
         function execCommandParam(command, value) {
             document.execCommand(command, false, value);
+            hayCambiosSinGuardar = true;
         }
 
-        function cambiarTamanoFuente(size) {
-            const selection = window.getSelection();
-            if (!selection.rangeCount) return;
-            const span = document.createElement("span");
-            span.style.fontSize = size;
-            span.appendChild(selection.getRangeAt(0).extractContents());
-            selection.getRangeAt(0).insertNode(span);
+        // ==== TAMAÑO DE FUENTE SIN ROMPER HTML ====
+        function cambiarTamanoSelect(val) {
+            const size = parseInt(val);
+            const sel = window.getSelection();
+            if (!sel.rangeCount || sel.isCollapsed) {
+                // Sin selección: aplicar al futuro texto con un hack
+                document.execCommand('fontSize', false, '7');
+                document.querySelectorAll('font[size="7"]').forEach(font => {
+                    const span = document.createElement('span');
+                    span.style.fontSize = size + 'px';
+                    span.innerHTML = font.innerHTML;
+                    font.parentNode.replaceChild(span, font);
+                });
+                return;
+            }
+            document.execCommand('fontSize', false, '7');
+            document.querySelectorAll('font[size="7"]').forEach(font => {
+                const span = document.createElement('span');
+                span.style.fontSize = size + 'px';
+                span.innerHTML = font.innerHTML;
+                font.parentNode.replaceChild(span, font);
+            });
+            hayCambiosSinGuardar = true;
         }
 
+        function modificarTamanoPunto(delta) {
+            const select = document.getElementById('font-size');
+            let actual = parseInt(select.value) || 12;
+            let nuevo = Math.max(8, Math.min(72, actual + delta));
+            select.value = nuevo;
+            cambiarTamanoSelect(nuevo);
+        }
+
+        // ==== VIÑETAS Y NUMERACIÓN NATIVAS ====
         function aplicarViñeta() {
-            const selection = window.getSelection();
-            if (!selection.rangeCount) return;
-            const texto = selection.toString() || "Elemento de lista";
-            const ul = document.createElement('ul');
-            ul.style.listStyleType = 'disc';
-            ul.style.marginLeft = '20px';
-            const li = document.createElement('li');
-            li.textContent = texto;
-            ul.appendChild(li);
-            
-            const range = selection.getRangeAt(0);
-            range.deleteContents();
-            range.insertNode(ul);
+            document.execCommand('insertUnorderedList', false, null);
+            hayCambiosSinGuardar = true;
         }
 
         function aplicarNumeracion() {
-            const selection = window.getSelection();
-            if (!selection.rangeCount) return;
-            const texto = selection.toString() || "Elemento numerado";
-            const ol = document.createElement('ol');
-            ol.style.listStyleType = 'decimal';
-            ol.style.marginLeft = '20px';
-            const li = document.createElement('li');
-            li.textContent = texto;
-            ol.appendChild(li);
-            
-            const range = selection.getRangeAt(0);
-            range.deleteContents();
-            range.insertNode(ol);
+            document.execCommand('insertOrderedList', false, null);
+            hayCambiosSinGuardar = true;
         }
 
+        // ==== PAGINACIÓN ====
         function insertarPaginaEnBlanco() {
-            crearNuevaPagina();
-        }
-
-        function crearNuevaPagina() {
-            const container = document.getElementById('page-container');
-            const numPaginas = container.querySelectorAll('.page-sheet').length + 1;
-            const nuevaHoja = document.createElement('div');
-            nuevaHoja.id = `editor-page-${numPaginas}`;
-            nuevaHoja.setAttribute('contenteditable', 'true');
-            nuevaHoja.className = 'page-sheet focus:outline-none';
-            container.appendChild(nuevaHoja);
-            paginaActualActiva = nuevaHoja;
-            nuevaHoja.focus();
+            const nueva = crearNuevaPagina(paginaActualActiva);
+            nueva.focus();
             actualizarEstadisticas();
         }
 
-        // Control de desbordamiento de página automático
-        document.addEventListener('input', (e) => {
-            if(e.target.classList && e.target.classList.contains('page-sheet')) {
-                if(e.target.scrollHeight > e.target.clientHeight) {
-                    // Si el contenido excede la página actual, pasamos el último hijo a una nueva página
-                    let children = e.target.children;
-                    if(children.length > 0) {
-                        let lastChild = children[children.length - 1];
-                        let nextSheet = e.target.nextElementSibling;
-                        if(!nextSheet) {
-                            crearNuevaPagina();
-                            nextSheet = e.target.nextElementSibling;
-                        }
-                        nextSheet.insertBefore(lastChild, nextSheet.firstChild);
-                        nextSheet.focus();
-                    }
+        function crearNuevaPagina(despuesDe = null) {
+            const container = document.getElementById('page-container');
+            const nuevaHoja = document.createElement('div');
+            nuevaHoja.id = `editor-page-${Date.now()}`;
+            nuevaHoja.setAttribute('contenteditable', 'true');
+            nuevaHoja.className = 'page-sheet focus:outline-none';
+
+            if (despuesDe && despuesDe.parentNode === container) {
+                container.insertBefore(nuevaHoja, despuesDe.nextSibling);
+            } else {
+                container.appendChild(nuevaHoja);
+            }
+            return nuevaHoja;
+        }
+
+        function limpiarHojasVacias() {
+            const hojas = document.querySelectorAll('.page-sheet');
+            if (hojas.length <= 1) return;
+            hojas.forEach((hoja, i) => {
+                if (i === 0) return;
+                if (hoja === paginaActualActiva) return;
+                const sinTexto = hoja.innerText.trim() === '';
+                const sinElementos = hoja.querySelectorAll('.lumina-element, table, img, ul, ol').length === 0;
+                if (sinTexto && sinElementos) {
+                    hoja.remove();
                 }
+            });
+        }
+
+        // ==== AUTO-PAGINADO ====
+        document.addEventListener('input', (e) => {
+            if (e.target.classList && e.target.classList.contains('page-sheet')) {
+                hayCambiosSinGuardar = true;
+                if (e.target.scrollHeight > e.target.clientHeight && e.target.children.length > 0) {
+                    let lastChild = e.target.lastElementChild;
+                    let nextSheet = e.target.nextElementSibling;
+                    if (!nextSheet || !nextSheet.classList.contains('page-sheet')) {
+                        nextSheet = crearNuevaPagina(e.target);
+                    }
+                    nextSheet.insertBefore(lastChild, nextSheet.firstChild);
+                    // Mover cursor al inicio de la nueva hoja
+                    const range = document.createRange();
+                    range.selectNodeContents(nextSheet);
+                    range.collapse(true);
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                    paginaActualActiva = nextSheet;
+                }
+                limpiarHojasVacias();
                 actualizarEstadisticas();
             }
         });
 
+        // ==== ESTADÍSTICAS ====
         function actualizarEstadisticas() {
             let textoTotal = "";
-            let numPaginas = document.querySelectorAll('.page-sheet').length;
             document.querySelectorAll('.page-sheet').forEach(sheet => {
                 textoTotal += sheet.innerText + " ";
             });
             let textoLimpio = textoTotal.trim();
             let palabras = textoLimpio === "" ? 0 : textoLimpio.split(/\s+/).length;
             let caracteres = textoLimpio.length;
+            let numPaginas = document.querySelectorAll('.page-sheet').length;
             document.getElementById('word-count').innerText = `Palabras: ${palabras}`;
             document.getElementById('char-count').innerText = `Caracteres: ${caracteres}`;
             document.getElementById('page-count').innerText = `Páginas: ${numPaginas}`;
         }
 
+        // ==== DRAG DE ELEMENTOS ====
         function hacerMovible(elemento) {
             let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
             elemento.onmousedown = dragMouseDown;
 
             function dragMouseDown(e) {
-                if(e.target.tagName === 'INPUT' || e.target.tagName === 'TD' || e.target.isContentEditable) return;
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TD' || e.target.isContentEditable) return;
                 e.preventDefault();
                 pos3 = e.clientX;
                 pos4 = e.clientY;
@@ -498,19 +602,20 @@
             }
         }
 
+        // ==== INSERTAR TABLA ====
         function insertarTablaFlotante() {
             let filas = prompt("Número de filas:", "3");
             let columnas = prompt("Número de columnas:", "3");
-            if(filas && columnas) {
+            if (filas && columnas) {
                 let wrapper = document.createElement('div');
                 wrapper.className = 'lumina-element lumina-table-wrapper';
                 wrapper.style.top = '100px';
                 wrapper.style.left = '50px';
 
                 let tablaHTML = '<table style="width:100%; border-collapse: collapse; background:white;">';
-                for(let i=0; i<parseInt(filas); i++) {
+                for (let i = 0; i < parseInt(filas); i++) {
                     tablaHTML += '<tr>';
-                    for(let j=0; j<parseInt(columnas); j++) {
+                    for (let j = 0; j < parseInt(columnas); j++) {
                         tablaHTML += '<td contenteditable="true" style="border: 1px solid #777; padding: 6px; min-width: 50px; min-height: 25px;">&nbsp;</td>';
                     }
                     tablaHTML += '</tr>';
@@ -519,23 +624,33 @@
                 wrapper.innerHTML = tablaHTML;
                 hacerMovible(wrapper);
                 getActiveEditor().appendChild(wrapper);
+                hayCambiosSinGuardar = true;
             }
         }
 
+        // ==== INSERTAR IMAGEN (con wrapper redimensionable) ====
         function insertarImagenURL() {
             let url = prompt("Introduce la URL de la imagen:");
-            if(url) {
-                let img = document.createElement('img');
-                img.src = url;
-                img.className = 'lumina-element';
-                img.style.width = '200px';
-                img.style.top = '100px';
-                img.style.left = '50px';
-                hacerMovible(img);
-                getActiveEditor().appendChild(img);
-            }
+            if (!url) return;
+
+            let wrapper = document.createElement('div');
+            wrapper.className = 'lumina-element';
+            wrapper.style.cssText = 'width: 220px; height: auto; top: 100px; left: 50px; padding: 0; border: 1px dashed transparent; background: transparent;';
+
+            let img = document.createElement('img');
+            img.src = url;
+            img.style.cssText = 'width: 100%; height: auto; display: block; pointer-events: none;';
+            img.onerror = () => {
+                alert('No se pudo cargar la imagen. Verifica la URL.');
+                wrapper.remove();
+            };
+            wrapper.appendChild(img);
+            hacerMovible(wrapper);
+            getActiveEditor().appendChild(wrapper);
+            hayCambiosSinGuardar = true;
         }
 
+        // ==== FORMAS ====
         function abrirModalFormas() { document.getElementById('modal-formas').classList.remove('hidden'); }
         function cerrarModalFormas() { document.getElementById('modal-formas').classList.add('hidden'); }
 
@@ -550,17 +665,17 @@
             div.style.color = '#ffffff';
             div.innerText = 'Texto';
 
-            if(tipo === 'circulo') {
+            if (tipo === 'circulo') {
                 div.style.borderRadius = '50%';
                 div.style.width = '100px';
                 div.style.height = '100px';
-            } else if(tipo === 'cuadrado') {
+            } else if (tipo === 'cuadrado') {
                 div.style.width = '100px';
                 div.style.height = '100px';
-            } else if(tipo === 'rectangulo') {
+            } else if (tipo === 'rectangulo') {
                 div.style.width = '140px';
                 div.style.height = '80px';
-            } else if(tipo === 'triangulo') {
+            } else if (tipo === 'triangulo') {
                 div.style.width = '100px';
                 div.style.height = '90px';
                 div.style.backgroundColor = 'rgba(245, 158, 11, 0.7)';
@@ -568,13 +683,15 @@
 
             div.addEventListener('dblclick', () => {
                 let trans = prompt("Introduce la opacidad (0.1 a 1.0):", "0.7");
-                if(trans) div.style.backgroundColor = `rgba(59, 130, 246, ${trans})`;
+                if (trans) div.style.backgroundColor = `rgba(59, 130, 246, ${trans})`;
             });
 
             hacerMovible(div);
             getActiveEditor().appendChild(div);
+            hayCambiosSinGuardar = true;
         }
 
+        // ==== API KEY ====
         function configurarApiKey() {
             let keyActual = localStorage.getItem('lumina_groq_key') || '';
             let groqKey = prompt("Ingresa tu API Key de Groq (empieza con gsk_):", keyActual);
@@ -594,32 +711,42 @@
             }
         }
 
-        // Integración con Lúmina AI usando Groq API (Devolviendo SOLO texto limpio)
+        // ==== LÚMINA AI ====
         async function ejecutarLuminaAI(accion) {
             let apiKey = localStorage.getItem('lumina_groq_key');
-            if(!apiKey) {
+            if (!apiKey) {
                 alert("Por favor, configura primero tu API Key haciendo clic en el icono de la llave (Lúmina AI Key).");
                 configurarApiKey();
                 return;
             }
 
-            if(!textoSeleccionadoGlobal) {
+            if (!textoSeleccionadoGlobal) {
                 alert("Por favor, selecciona algún texto en el documento primero.");
                 return;
             }
 
+            let spanId = "";
+            if (accion === 'resumir') spanId = "txt-resumir";
+            else if (accion === 'mejorar') spanId = "txt-mejorar";
+            else if (accion === 'alargar') spanId = "txt-alargar";
+            else if (accion === 'ortografia') spanId = "txt-ortografia";
+
+            let spanElement = document.getElementById(spanId);
+            let textoOriginalBtn = spanElement.innerText;
+            spanElement.innerText = "Generando...";
+
             let promptInstruccion = "";
-            if(accion === 'resumir') promptInstruccion = "Resume el siguiente texto de manera concisa. Devuelve ÚNICAMENTE el texto resultante limpio, sin introducciones ni comentarios:";
-            else if(accion === 'mejorar') promptInstruccion = "Mejora la redacción y estilo del siguiente texto. Devuelve ÚNICAMENTE el texto resultante limpio, sin introducciones ni comentarios:";
-            else if(accion === 'alargar') promptInstruccion = "Amplía y desarrolla más a fondo el siguiente texto con más detalles y argumentos. Devuelve ÚNICAMENTE el texto resultante limpio, sin introducciones ni comentarios:";
-            else if(accion === 'ortografia') promptInstruccion = "Corrige la ortografía y gramática del siguiente texto. Devuelve ÚNICAMENTE el texto resultante limpio, sin introducciones ni comentarios:";
+            if (accion === 'resumir') promptInstruccion = "Resume el siguiente texto de manera concisa. Devuelve ÚNICAMENTE el texto resultante limpio, sin introducciones ni comentarios:";
+            else if (accion === 'mejorar') promptInstruccion = "Mejora la redacción y estilo del siguiente texto. Devuelve ÚNICAMENTE el texto resultante limpio, sin introducciones ni comentarios:";
+            else if (accion === 'alargar') promptInstruccion = "Amplía y desarrolla más a fondo el siguiente texto con más detalles y argumentos. Devuelve ÚNICAMENTE el texto resultante limpio, sin introducciones ni comentarios:";
+            else if (accion === 'ortografia') promptInstruccion = "Corrige la ortografía y gramática del siguiente texto. Devuelve ÚNICAMENTE el texto resultante limpio, sin introducciones ni comentarios:";
 
             let promptCompleto = `${promptInstruccion}\n\n"${textoSeleccionadoGlobal}"`;
 
             try {
                 let response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                     method: 'POST',
-                    headers: { 
+                    headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${apiKey}`
                     },
@@ -638,7 +765,7 @@
                 }
 
                 let data = await response.json();
-                if(data.choices && data.choices[0].message.content) {
+                if (data.choices && data.choices[0].message.content) {
                     let resultadoAI = data.choices[0].message.content.trim();
                     mostrarModalAI(resultadoAI);
                 } else {
@@ -647,6 +774,8 @@
             } catch (error) {
                 console.error(error);
                 alert("Error de conexión con Lúmina AI: " + error.message);
+            } finally {
+                spanElement.innerText = textoOriginalBtn;
             }
         }
 
@@ -666,48 +795,69 @@
             });
         }
 
+        // ==== MENÚ GUARDAR ====
         function toggleGuardarMenu(e) {
             e.stopPropagation();
             const menu = document.getElementById('guardar-menu');
             menu.classList.toggle('hidden');
         }
 
+        document.addEventListener('click', () => {
+            document.getElementById('guardar-menu').classList.add('hidden');
+        });
+
         function menuGuardarWord() {
             let tituloActual = document.getElementById('doc-title').value || "Documento";
             let nuevoNombre = prompt("Nombre del archivo:", tituloActual);
-            if(!nuevoNombre) return;
+            if (!nuevoNombre) return;
 
             let contenidoTotalHTML = "";
             document.querySelectorAll('.page-sheet').forEach(sheet => {
-                contenidoTotalHTML += sheet.innerHTML + "<br style='page-break-after:always;'>";
+                contenidoTotalHTML += sheet.innerHTML + "<br clear=all style='page-break-before:always;'>";
             });
 
             let contenidoWord = `<!DOCTYPE html>
             <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-            <head><meta charset='utf-8'><title>${nuevoNombre}</title></head>
+            <head>
+                <meta charset='utf-8'>
+                <title>${nuevoNombre}</title>
+                <!--[if gte mso 9]>
+                <xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml>
+                <![endif]-->
+                <style>
+                    @page { size: 21.59cm 27.94cm; margin: 2.54cm; }
+                    body { font-family: Calibri, sans-serif; font-size: 11pt; }
+                </style>
+            </head>
             <body>${contenidoTotalHTML}</body></html>`;
 
             let blob = new Blob(['\ufeff' + contenidoWord], { type: 'application/msword' });
             let enlace = document.createElement('a');
             enlace.href = URL.createObjectURL(blob);
             enlace.download = `${nuevoNombre}.doc`;
-            
-            if(localStorage.getItem(`lumina_file_${nuevoNombre}`)) {
-                let reemplazar = confirm(`Ya existe un archivo llamado "${nuevoNombre}.doc". ¿Deseas reemplazarlo?`);
-                if(!reemplazar) return;
-            }
-            localStorage.setItem(`lumina_file_${nuevoNombre}`, contenidoTotalHTML);
             enlace.click();
+
+            hayCambiosSinGuardar = false;
             alert(`¡Documento guardado como "${nuevoNombre}.doc" compatible con Word!`);
         }
 
         function menuGuardarComo() {
+            hayCambiosSinGuardar = false;
             window.print();
         }
 
+        // ==== AVISO AL CERRAR ====
+        window.addEventListener('beforeunload', (e) => {
+            if (hayCambiosSinGuardar) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        // ==== ORIENTACIÓN ====
         function cambiarOrientacion(tipo) {
             document.querySelectorAll('.page-sheet').forEach(sheet => {
-                if(tipo === 'horizontal') {
+                if (tipo === 'horizontal') {
                     sheet.style.width = '1056px';
                     sheet.style.height = '816px';
                 } else {
@@ -715,7 +865,7 @@
                     sheet.style.height = '1056px';
                 }
             });
-            if(tipo === 'horizontal') {
+            if (tipo === 'horizontal') {
                 document.getElementById('btn-horiz').className = "px-3 py-1 border rounded bg-blue-50 border-blue-400 text-blue-700 font-medium";
                 document.getElementById('btn-vert').className = "px-3 py-1 border rounded bg-white hover:bg-gray-50";
             } else {
@@ -724,12 +874,13 @@
             }
         }
 
+        // ==== TAMAÑO DE HOJA ====
         function cambiarTamanoHoja(tamano) {
             document.querySelectorAll('.page-sheet').forEach(sheet => {
-                if(tamano === 'a4') {
+                if (tamano === 'a4') {
                     sheet.style.width = '794px';
                     sheet.style.height = '1123px';
-                } else if(tamano === 'oficio') {
+                } else if (tamano === 'oficio') {
                     sheet.style.width = '816px';
                     sheet.style.height = '1344px';
                 } else {
@@ -739,6 +890,7 @@
             });
         }
 
+        // ==== COLUMNAS ====
         function cambiarColumnas(numCols) {
             document.querySelectorAll('.page-sheet').forEach(sheet => {
                 sheet.style.columnCount = numCols;
@@ -746,6 +898,7 @@
             });
         }
 
+        // ==== ZOOM ====
         function cambiarZoom(val) {
             document.getElementById('page-container').style.transform = `scale(${val / 100})`;
             document.getElementById('zoom-val').innerText = `${val}%`;
@@ -757,6 +910,14 @@
             range.value = nuevoVal;
             cambiarZoom(nuevoVal);
         }
+
+        // ==== TÍTULO ====
+        document.getElementById('doc-title').addEventListener('input', () => {
+            hayCambiosSinGuardar = true;
+        });
+
+        // ==== INICIALIZAR ====
+        actualizarEstadisticas();
     </script>
 </body>
 </html>
