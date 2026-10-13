@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Editor Web - Estilo Word</title>
+    <!-- Tailwind CSS para el diseño -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Quill.js CSS para el editor -->
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
+    <style>
+        /* Ajuste para que el editor parezca una hoja de papel en pantalla */
+        .ql-container {
+            font-family: 'Calibri', 'Arial', sans-serif;
+            font-size: 16px;
+            background-color: white;
+            min-height: 700px;
+        }
+        .paper-shadow {
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col">
+
+    <!-- Barra Superior / Cinta de opciones estilo Office -->
+    <header class="bg-blue-700 text-white shadow-md">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                <h1 class="text-xl font-semibold">Mi Documento Word</h1>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="guardarLocal()" class="bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded text-sm font-medium transition">Guardar Local</button>
+                <button onclick="exportarTxt()" class="bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded text-sm font-medium transition">Descargar</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Área de Trabajo (Simulando la hoja) -->
+    <main class="flex-grow max-w-4xl w-full mx-auto p-6">
+        <div class="bg-white paper-shadow rounded-lg border border-slate-200 overflow-hidden">
+            <!-- El contenedor donde se monta Quill -->
+            <div id="editor">
+                <p>Comienza a escribir tu documento aquí...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Quill.js Script -->
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+    <script>
+        // Inicializar el editor de texto enriquecido
+        const quill = new Quill('#editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ header: [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ color: [] }, { background: [] }],
+                    [{ list: 'ordered' }, { list: 'bullet' }],
+                    ['blockquote', 'code-block'],
+                    ['clean']
+                ]
+            }
+        });
+
+        // Cargar contenido guardado previamente si existe
+        window.onload = function() {
+            const savedContent = localStorage.getItem('documento_guardado');
+            if (savedContent) {
+                quill.root.innerHTML = savedContent;
+            }
+        };
+
+        // Función para guardar en el navegador (LocalStorage)
+        function guardarLocal() {
+            const contenido = quill.root.innerHTML;
+            localStorage.setItem('documento_guardado', contenido);
+            alert('¡Documento guardado en el navegador con éxito!');
+        }
+
+        // Función básica para descargar como archivo de texto/html
+        function exportarTxt() {
+            const texto = quill.getText();
+            const blob = new Blob([texto], { type: 'text/plain;charset=utf-8' });
+            const enlace = document.createElement('a');
+            enlace.href = URL.createObjectURL(blob);
+            enlace.download = 'documento.txt';
+            enlace.click();
+        }
+    </script>
+</body>
+</html>
