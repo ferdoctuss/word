@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Online - Tu Editor Web</title>
-    <!-- Tailwind CSS para el diseño estético de Microsoft 365 -->
+    <title>Microsoft Word Online - GitHub Pages</title>
+    <!-- Tailwind CSS para diseño moderno -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Quill.js CSS para el motor del procesador de textos -->
-    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
-    <!-- FontAwesome para iconos modernos -->
+    <!-- FontAwesome para iconos estilo Office -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
@@ -16,78 +14,53 @@
             background-color: #f3f3f3;
             color: #333;
         }
-        /* Estilo de la hoja de papel simulando Word */
+        /* Estilo de la hoja de papel simulando Microsoft Word */
         .word-page {
-            width: 816px; /* Ancho estándar carta a 96 DPI aprox */
+            width: 816px; /* Ancho Carta a 96 DPI */
             min-height: 1056px;
             background: white;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
             margin: 2rem auto;
-            padding: 96px; /* Márgenes estándar de Word (1 pulgada) */
+            padding: 96px; /* 1 pulgada de margen real */
             box-sizing: border-box;
+            outline: none;
             transition: transform 0.2s ease, width 0.2s ease, min-height 0.2s ease;
             transform-origin: top center;
         }
-        /* Personalización de Quill para que parezca una página de Word limpia */
-        .ql-container.ql-snow {
-            border: none !important;
-            font-size: 15px;
-            font-family: 'Calibri', Arial, sans-serif;
-            line-height: 1.6;
-        }
-        .ql-toolbar.ql-snow {
-            border: none !important;
-            background: transparent;
-            padding: 0 !important;
-        }
-        /* Ocultar barra de Quill por defecto para usar nuestra cinta personalizada */
-        .custom-toolbar-container .ql-toolbar {
-            display: none;
-        }
-        /* Estilos para columnas en el editor */
-        .editor-cols-1 { column-count: 1; column-gap: 2rem; }
-        .editor-cols-2 { column-count: 2; column-gap: 2rem; }
-        .editor-cols-3 { column-count: 3; column-gap: 1.5rem; }
+        /* Clases para columnas de Disposición */
+        .cols-1 { column-count: 1; column-gap: 2rem; }
+        .cols-2 { column-count: 2; column-gap: 2rem; }
+        .cols-3 { column-count: 3; column-gap: 1.5rem; }
 
-        /* Formas insertadas */
-        .shape-box {
-            border: 2px dashed #2563eb;
-            background: #eff6ff;
-            padding: 16px;
-            margin: 10px 0;
-            border-radius: 6px;
+        /* Estilos para tablas insertadas */
+        .word-page table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        .word-page th, .word-page td {
+            border: 1px solid #d1d5db;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .word-page th {
+            background-color: #f8fafc;
+        }
+        /* Estilos para formas */
+        .shape-element {
             display: inline-block;
-            min-width: 150px;
+            padding: 1rem;
+            margin: 0.5rem;
             text-align: center;
-        }
-        .shape-circle {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: #3b82f6;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            margin: 10px;
-        }
-        .shape-square {
-            width: 120px;
-            height: 120px;
-            background: #10b981;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            margin: 10px;
-            border-radius: 4px;
+            cursor: pointer;
+            user-select: none;
         }
     </style>
 </head>
 <body class="flex flex-col h-screen overflow-hidden">
 
-    <!-- Barra Superior Estilo Office (Imagen 1) -->
-    <header class="bg-[#1b3a60] text-white flex items-center justify-between px-4 py-2 shadow-md select-none z-20">
+    <!-- BARRA SUPERIOR (ESTILO IMAGEN 1) -->
+    <header class="bg-[#1b3a60] text-white flex items-center justify-between px-4 py-2 shadow-md select-none z-30">
         <div class="flex items-center space-x-4">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-file-word text-2xl text-blue-400"></i>
@@ -103,83 +76,83 @@
             </div>
         </div>
 
-        <!-- Botones de acceso rápido (Imagen 1: Home, Save, Undo, Redo, Print, Options) -->
-        <div class="flex items-center space-x-3 text-sm">
-            <button onclick="window.location.reload()" title="Inicio / Nuevo" class="p-2 hover:bg-white/10 rounded transition"><i class="fa-solid fa-house"></i></button>
-            <button onclick="guardarDocumento()" title="Guardar" class="p-2 hover:bg-white/10 rounded transition text-blue-300"><i class="fa-solid fa-floppy-disk"></i></button>
-            <button onclick="ejecutarComandoQuill('undo')" title="Deshacer (Retroceso)" class="p-2 hover:bg-white/10 rounded transition"><i class="fa-solid fa-rotate-left"></i></button>
-            <button onclick="ejecutarComandoQuill('redo')" title="Rehacer (Adelantado)" class="p-2 hover:bg-white/10 rounded transition"><i class="fa-solid fa-rotate-right"></i></button>
+        <!-- Botones de Acceso Rápido -->
+        <div class="flex items-center space-x-2 text-sm">
+            <button onclick="nuevoDocumento()" title="Inicio / Nuevo" class="p-2 hover:bg-white/10 rounded transition"><i class="fa-solid fa-house"></i></button>
+            <button onclick="guardarDocumentoManual()" title="Guardar" class="p-2 hover:bg-white/10 rounded transition text-blue-300"><i class="fa-solid fa-floppy-disk"></i></button>
+            <button onclick="document.execCommand('undo', false, null)" title="Retroceso (Deshacer)" class="p-2 hover:bg-white/10 rounded transition"><i class="fa-solid fa-rotate-left"></i></button>
+            <button onclick="document.execCommand('redo', false, null)" title="Adelantado (Rehacer)" class="p-2 hover:bg-white/10 rounded transition"><i class="fa-solid fa-rotate-right"></i></button>
             <button onclick="window.print()" title="Imprimir" class="p-2 hover:bg-white/10 rounded transition"><i class="fa-solid fa-print"></i></button>
-            <button onclick="mostrarOpcionesExtra()" title="Más opciones" class="p-2 hover:bg-white/10 rounded transition"><i class="fa-solid fa-ellipsis"></i></button>
+            <button onclick="mostrarInfo()" title="Más opciones" class="p-2 hover:bg-white/10 rounded transition"><i class="fa-solid fa-ellipsis"></i></button>
         </div>
     </header>
 
-    <!-- Línea de Pestañas (Inicio, Insertar, Disposición) -->
-    <nav class="bg-[#2b579a] text-white flex px-4 space-x-1 text-sm font-medium border-b border-blue-800 select-none">
-        <button onclick="cambiarPestana('inicio')" id="btn-tab-inicio" class="px-5 py-2.5 border-b-2 border-white bg-white/10 transition">Inicio</button>
-        <button onclick="cambiarPestana('insertar')" id="btn-tab-insertar" class="px-5 py-2.5 border-b-2 border-transparent hover:bg-white/10 transition">Insertar</button>
-        <button onclick="cambiarPestana('disposicion')" id="btn-tab-disposicion" class="px-5 py-2.5 border-b-2 border-transparent hover:bg-white/10 transition">Disposición</button>
+    <!-- LÍNEA DE PESTAÑAS (INICIO, INSERTAR, DISPOSICIÓN) -->
+    <nav class="bg-[#2b579a] text-white flex px-4 space-x-1 text-sm font-medium border-b border-blue-800 select-none z-20">
+        <button onclick="cambiarPestana('inicio')" id="tab-inicio" class="px-5 py-2.5 border-b-2 border-white bg-white/10 transition">Inicio</button>
+        <button onclick="cambiarPestana('insertar')" id="tab-insertar" class="px-5 py-2.5 border-b-2 border-transparent hover:bg-white/10 transition">Insertar</button>
+        <button onclick="cambiarPestana('disposicion')" id="tab-disposicion" class="px-5 py-2.5 border-b-2 border-transparent hover:bg-white/10 transition">Disposición</button>
     </nav>
 
-    <!-- Contenedor de la Cinta de Opciones (Ribbon Panels) -->
-    <div class="bg-white border-b border-gray-200 px-6 py-3 shadow-sm min-h-[90px] flex items-center select-none z-10">
+    <!-- CINTA DE OPCIONES (RIBBON) -->
+    <div class="bg-white border-b border-gray-200 px-6 py-3 shadow-sm min-h-[85px] flex items-center select-none z-10">
         
-        <!-- Pestaña INICIO (Imagen 2) -->
+        <!-- PESTAÑA INICIO (ESTILO IMAGEN 2) -->
         <div id="panel-inicio" class="flex flex-wrap items-center gap-4 w-full">
             <div class="flex items-center space-x-2 border-r pr-4 border-gray-200">
-                <select id="select-font-family" onchange="cambiarFuente(this.value)" class="border border-gray-300 rounded px-2 py-1 text-sm bg-gray-50 outline-none">
+                <select id="fontFamilySelect" onchange="ejecutarComando('fontName', this.value)" class="border border-gray-300 rounded px-2 py-1 text-sm bg-gray-50 outline-none">
                     <option value="Calibri">Calibri</option>
                     <option value="Arial">Arial</option>
                     <option value="Times New Roman">Times New Roman</option>
                     <option value="Georgia">Georgia</option>
                     <option value="Courier New">Courier New</option>
                 </select>
-                <select id="select-font-size" onchange="cambiarTamanoFuente(this.value)" class="border border-gray-300 rounded px-2 py-1 text-sm bg-gray-50 outline-none w-20">
-                    <option value="12px">10 pt</option>
-                    <option value="14px">12 pt</option>
-                    <option value="16px" selected>14 pt</option>
-                    <option value="20px">18 pt</option>
-                    <option value="24px">24 pt</option>
-                    <option value="32px">32 pt</option>
+                <select id="fontSizeSelect" onchange="ejecutarComando('fontSize', this.value)" class="border border-gray-300 rounded px-2 py-1 text-sm bg-gray-50 outline-none w-20">
+                    <option value="2">10 pt</option>
+                    <option value="3" selected>12 pt</option>
+                    <option value="4">14 pt</option>
+                    <option value="5">18 pt</option>
+                    <option value="6">24 pt</option>
+                    <option value="7">32 pt</option>
                 </select>
             </div>
 
             <div class="flex items-center space-x-1 border-r pr-4 border-gray-200">
-                <button onclick="formatoQuill('bold')" class="p-2 hover:bg-gray-100 rounded text-gray-700 font-bold w-9 h-9" title="Negrita"><i class="fa-solid fa-bold"></i></button>
-                <button onclick="formatoQuill('italic')" class="p-2 hover:bg-gray-100 rounded text-gray-700 italic w-9 h-9" title="Cursiva"><i class="fa-solid fa-italic"></i></button>
-                <button onclick="formatoQuill('underline')" class="p-2 hover:bg-gray-100 rounded text-gray-700 underline w-9 h-9" title="Subrayado"><i class="fa-solid fa-underline"></i></button>
-                <button onclick="formatoQuill('strike')" class="p-2 hover:bg-gray-100 rounded text-gray-700 w-9 h-9" title="Tachado"><i class="fa-solid fa-strikethrough"></i></button>
+                <button onclick="ejecutarComando('bold')" class="p-2 hover:bg-gray-100 rounded text-gray-700 font-bold w-9 h-9" title="Negrita"><i class="fa-solid fa-bold"></i></button>
+                <button onclick="ejecutarComando('italic')" class="p-2 hover:bg-gray-100 rounded text-gray-700 italic w-9 h-9" title="Cursiva"><i class="fa-solid fa-italic"></i></button>
+                <button onclick="ejecutarComando('underline')" class="p-2 hover:bg-gray-100 rounded text-gray-700 underline w-9 h-9" title="Subrayado"><i class="fa-solid fa-underline"></i></button>
+                <button onclick="ejecutarComando('strikeThrough')" class="p-2 hover:bg-gray-100 rounded text-gray-700 w-9 h-9" title="Tachado"><i class="fa-solid fa-strikethrough"></i></button>
             </div>
 
             <div class="flex items-center space-x-2 border-r pr-4 border-gray-200">
                 <div class="flex flex-col items-center">
                     <span class="text-[10px] text-gray-500 font-bold">Color</span>
-                    <input type="color" onchange="cambiarColorTexto(this.value)" class="w-7 h-7 border-0 cursor-pointer bg-transparent" title="Color de texto">
+                    <input type="color" onchange="ejecutarComando('foreColor', this.value)" class="w-7 h-7 border-0 cursor-pointer bg-transparent" title="Color de texto">
                 </div>
                 <div class="flex flex-col items-center">
                     <span class="text-[10px] text-gray-500 font-bold">Resaltar</span>
-                    <input type="color" value="#ffff00" onchange="cambiarFondoTexto(this.value)" class="w-7 h-7 border-0 cursor-pointer bg-transparent" title="Color de resaltado">
+                    <input type="color" value="#ffff00" onchange="ejecutarComando('hiliteColor', this.value)" class="w-7 h-7 border-0 cursor-pointer bg-transparent" title="Color de resaltado">
                 </div>
             </div>
 
             <div class="flex items-center space-x-1 border-r pr-4 border-gray-200">
-                <button onclick="formatoQuill('list', 'ordered')" class="p-2 hover:bg-gray-100 rounded text-gray-700 w-9 h-9" title="Lista numerada"><i class="fa-solid fa-list-ol"></i></button>
-                <button onclick="formatoQuill('list', 'bullet')" class="p-2 hover:bg-gray-100 rounded text-gray-700 w-9 h-9" title="Lista con viñetas"><i class="fa-solid fa-list"></i></button>
-                <button onclick="formatoQuill('blockquote', true)" class="p-2 hover:bg-gray-100 rounded text-gray-700 w-9 h-9" title="Cita"><i class="fa-solid fa-quote-right"></i></button>
+                <button onclick="ejecutarComando('insertOrderedList')" class="p-2 hover:bg-gray-100 rounded text-gray-700 w-9 h-9" title="Lista numerada"><i class="fa-solid fa-list-ol"></i></button>
+                <button onclick="ejecutarComando('insertUnorderedList')" class="p-2 hover:bg-gray-100 rounded text-gray-700 w-9 h-9" title="Lista con viñetas"><i class="fa-solid fa-list"></i></button>
+                <button onclick="ejecutarComando('formatBlock', 'blockquote')" class="p-2 hover:bg-gray-100 rounded text-gray-700 w-9 h-9" title="Cita"><i class="fa-solid fa-quote-right"></i></button>
             </div>
 
             <div class="flex items-center space-x-1">
-                <button onclick="limpiarFormato()" class="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 rounded font-medium text-gray-700 transition flex items-center space-x-1">
+                <button onclick="ejecutarComando('removeFormat')" class="px-3 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 rounded font-medium text-gray-700 transition flex items-center space-x-1">
                     <i class="fa-solid fa-filter-circle-xmark"></i>
-                    <span>Limpiar Formato</span>
+                    <span>Borrar formato</span>
                 </button>
             </div>
         </div>
 
-        <!-- Pestaña INSERTAR -->
+        <!-- PESTAÑA INSERTAR -->
         <div id="panel-insertar" class="hidden flex-wrap items-center gap-6 w-full">
             <div class="flex items-center space-x-3 border-r pr-6 border-gray-200">
-                <button onclick="abrirModalTabla()" class="flex flex-col items-center p-2 hover:bg-blue-50 rounded text-blue-700 transition">
+                <button onclick="insertarTablaPrompt()" class="flex flex-col items-center p-2 hover:bg-blue-50 rounded text-blue-700 transition">
                     <i class="fa-solid fa-table text-xl mb-1"></i>
                     <span class="text-xs font-medium">Tabla</span>
                 </button>
@@ -195,29 +168,29 @@
 
             <div class="flex items-center space-x-2">
                 <span class="text-xs font-bold text-gray-500 uppercase tracking-wider mr-2">Formas:</span>
-                <button onclick="insertarForma('cuadrado')" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-medium flex items-center space-x-1.5 transition">
-                    <i class="fa-solid fa-square text-emerald-600"></i><span>Cuadrado</span>
+                <button onclick="insertarForma('rectangulo')" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-medium flex items-center space-x-1.5 transition">
+                    <i class="fa-solid fa-square text-emerald-600"></i><span>Rectángulo</span>
                 </button>
                 <button onclick="insertarForma('circulo')" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-medium flex items-center space-x-1.5 transition">
                     <i class="fa-solid fa-circle text-blue-600"></i><span>Círculo</span>
                 </button>
                 <button onclick="insertarForma('linea')" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-medium flex items-center space-x-1.5 transition">
-                    <i class="fa-solid fa-minus text-gray-700"></i><span>Línea Divisoria</span>
+                    <i class="fa-solid fa-minus text-gray-700"></i><span>Línea</span>
                 </button>
-                <button onclick="insertarForma('cuadro-texto')" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-medium flex items-center space-x-1.5 transition">
+                <button onclick="insertarForma('caja')" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-medium flex items-center space-x-1.5 transition">
                     <i class="fa-solid fa-font text-purple-600"></i><span>Cuadro de Texto</span>
                 </button>
             </div>
         </div>
 
-        <!-- Pestaña DISPOSICIÓN -->
+        <!-- PESTAÑA DISPOSICIÓN -->
         <div id="panel-disposicion" class="hidden flex-wrap items-center gap-6 w-full">
             <div class="flex items-center space-x-4 border-r pr-6 border-gray-200">
                 <div class="flex flex-col">
                     <span class="text-xs font-bold text-gray-500 mb-1">Orientación</span>
                     <div class="flex space-x-1">
-                        <button onclick="cambiarOrientacion('vertical')" id="btn-ori-vert" class="px-3 py-1 bg-blue-600 text-white rounded text-xs font-medium transition">Vertical</button>
-                        <button onclick="cambiarOrientacion('horizontal')" id="btn-ori-horiz" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-xs font-medium transition">Horizontal</button>
+                        <button onclick="cambiarOrientacion('vertical')" id="btn-vert" class="px-3 py-1 bg-blue-600 text-white rounded text-xs font-medium transition">Vertical</button>
+                        <button onclick="cambiarOrientacion('horizontal')" id="btn-horiz" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-xs font-medium transition">Horizontal</button>
                     </div>
                 </div>
 
@@ -246,8 +219,8 @@
                 <div class="flex flex-col">
                     <span class="text-xs font-bold text-gray-500 mb-1">Sangría de Párrafo</span>
                     <div class="flex space-x-1">
-                        <button onclick="cambiarSangria('disminuir')" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-xs font-medium"><i class="fa-solid fa-outdent mr-1"></i> Disminuir</button>
-                        <button onclick="cambiarSangria('aumentar')" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-xs font-medium"><i class="fa-solid fa-indent mr-1"></i> Aumentar</button>
+                        <button onclick="ejecutarComando('outdent')" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-xs font-medium"><i class="fa-solid fa-outdent mr-1"></i> Disminuir</button>
+                        <button onclick="ejecutarComando('indent')" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-xs font-medium"><i class="fa-solid fa-indent mr-1"></i> Aumentar</button>
                     </div>
                 </div>
             </div>
@@ -255,179 +228,130 @@
 
     </div>
 
-    <!-- Área de Trabajo Central (Simulando la hoja de papel interactiva con Zoom) -->
+    <!-- ÁREA DE TRABAJO (HOJA DE PAPEL EDITABLE) -->
     <main class="flex-grow overflow-auto p-8 relative flex justify-center items-start">
-        <div id="hoja-papel" class="word-page editor-cols-1 relative">
-            <!-- Contenedor Quill -->
-            <div id="editor" class="min-h-[850px] outline-none">
-                <p>Escribe tu documento aquí. Disfruta de las funciones de Word en la web...</p>
-            </div>
+        <div id="hojaPapel" class="word-page cols-1" contenteditable="true" spellcheck="true">
+            <h1 style="font-size: 24px; font-weight: bold; margin-bottom: 12px;">¡Bienvenido a tu Word en GitHub!</h1>
+            <p>Comienza a redactar tu documento aquí. Todas las herramientas de las pestañas superiores están totalmente operativas.</p>
         </div>
     </main>
 
-    <!-- Barra de Estado Inferior (Contador de páginas, palabras, caracteres y zoom) -->
-    <footer class="bg-white border-t border-gray-200 px-6 py-2 flex justify-between items-center text-xs text-gray-600 select-none z-20">
+    <!-- BARRA INFERIOR DE ESTADO -->
+    <footer class="bg-white border-t border-gray-200 px-6 py-2 flex justify-between items-center text-xs text-gray-600 select-none z-30">
         <div class="flex items-center space-x-6">
-            <span id="status-pagina">Página 1 de 1</span>
-            <span id="status-palabras">0 palabras</span>
-            <span id="status-caracteres">0 caracteres</span>
+            <span id="statPagina">Página 1 de 1</span>
+            <span id="statPalabras">0 palabras</span>
+            <span id="statCaracteres">0 caracteres</span>
         </div>
 
         <div class="flex items-center space-x-3">
             <button onclick="cambiarZoom(-10)" class="w-6 h-6 flex items-center justify-center hover:bg-gray-100 rounded text-gray-700 font-bold" title="Alejar">−</button>
-            <span id="zoom-text" class="w-12 text-center font-medium">100%</span>
+            <span id="zoomText" class="w-12 text-center font-medium">100%</span>
             <button onclick="cambiarZoom(10)" class="w-6 h-6 flex items-center justify-center hover:bg-gray-100 rounded text-gray-700 font-bold" title="Acercar">+</button>
         </div>
     </footer>
 
-    <!-- Quill.js Script -->
-    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
     <script>
-        // Inicializar editor Quill
-        const quill = new Quill('#editor', {
-            theme: 'snow',
-            modules: {
-                toolbar: false // Usamos nuestra cinta personalizada
-            }
-        });
+        const hoja = document.getElementById('hojaPapel');
 
-        // Cargar autoguardado previo al iniciar
+        // Cargar contenido guardado al iniciar
         window.onload = function() {
-            const contenidoGuardado = localStorage.getItem('word_web_content');
+            const contenidoGuardado = localStorage.getItem('word_documento_html');
             if (contenidoGuardado) {
-                quill.root.innerHTML = contenidoGuardado;
+                hoja.innerHTML = contenidoGuardado;
             }
             actualizarEstadisticas();
         };
 
-        // Escuchar cambios para autoguardado y estadísticas en tiempo real
-        quill.on('text-change', function() {
+        // Escuchar cambios para estadísticas y autoguardado
+        hoja.addEventListener('input', () => {
             actualizarEstadisticas();
-            const autoSaveEnabled = document.getElementById('autoSaveToggle').checked;
-            if (autoSaveEnabled) {
-                localStorage.setItem('word_web_content', quill.root.innerHTML);
+            if (document.getElementById('autoSaveToggle').checked) {
+                localStorage.setItem('word_documento_html', hoja.innerHTML);
             }
         });
 
-        // Actualizar contador de palabras, caracteres y páginas
+        // Actualizar contadores de palabras y caracteres
         function actualizarEstadisticas() {
-            const textoCompleto = quill.getText();
-            // Caracteres (sin contar el salto final de Quill)
-            const numCaracteres = textoCompleto.trim().length > 0 ? textoCompleto.length - 1 : 0;
-            // Palabras
-            const palabrasMatch = textoCompleto.trim().match(/\S+/g);
-            const numPalabras = palabrasMatch ? palabrasMatch.length : 0;
-            // Páginas estimadas basadas en altura de contenido (cada 1000 caracteres aprox 1 página)
-            const numPaginas = Math.max(1, Math.ceil(numCaracteres / 1200));
+            const texto = hoja.innerText || "";
+            const caracteres = texto.length;
+            const palabrasMatch = texto.trim().match(/\S+/g);
+            const palabras = palabrasMatch ? palabrasMatch.length : 0;
+            const paginas = Math.max(1, Math.ceil(caracteres / 1500));
 
-            document.getElementById('status-palabras').innerText = `${numPalabras} palabras`;
-            document.getElementById('status-caracteres').innerText = `${numCaracteres} caracteres`;
-            document.getElementById('status-pagina').innerText = `Página ${numPaginas} de ${numPaginas}`;
+            document.getElementById('statPalabras').innerText = `${palabras} palabras`;
+            document.getElementById('statCaracteres').innerText = `${caracteres} caracteres`;
+            document.getElementById('statPagina').innerText = `Página ${paginas} de ${paginas}`;
         }
 
         // Cambio de pestañas en la cinta
-        function cambiarPestana(pestana) {
+        function cambiarPestana(nombre) {
             ['inicio', 'insertar', 'disposicion'].forEach(p => {
                 document.getElementById(`panel-${p}`).classList.add('hidden');
-                document.getElementById(`btn-tab-${p}`).classList.remove('border-white', 'bg-white/10');
-                document.getElementById(`btn-tab-${p}`).classList.add('border-transparent');
+                document.getElementById(`tab-${p}`).classList.remove('border-white', 'bg-white/10');
+                document.getElementById(`tab-${p}`).classList.add('border-transparent');
             });
 
-            document.getElementById(`panel-${pestana}`).classList.remove('hidden');
-            document.getElementById(`btn-tab-${pestana}`).classList.add('border-white', 'bg-white/10');
-            document.getElementById(`btn-tab-${pestana}`).classList.remove('border-transparent');
+            document.getElementById(`panel-${nombre}`).classList.remove('hidden');
+            document.getElementById(`tab-${nombre}`).classList.add('border-white', 'bg-white/10');
+            document.getElementById(`tab-${nombre}`).classList.remove('border-transparent');
         }
 
-        // Comandos de formato rápido para Inicio
-        function formatoQuill(format, value = true) {
-            let range = quill.getSelection(true);
-            if (range) {
-                let actual = quill.getFormat(range);
-                quill.format(format, actual[format] ? false : value);
-            }
+        // Ejecutar comandos de formato de texto enriquecido
+        function ejecutarComando(comando, valor = null) {
+            document.execCommand(comando, false, valor);
+            hoja.focus();
         }
 
-        function cambiarFuente(fuente) {
-            quill.format('font', fuente);
-        }
-
-        function cambiarTamanoFuente(tamano) {
-            quill.format('size', tamano);
-        }
-
-        function cambiarColorTexto(color) {
-            quill.format('color', color);
-        }
-
-        function cambiarFondoTexto(color) {
-            quill.format('background', color);
-        }
-
-        function limpiarFormato() {
-            let range = quill.getSelection();
-            if (range) {
-                quill.removeFormat(range.index, range.length);
-            }
-        }
-
-        function ejecutarComandoQuill(accion) {
-            if (accion === 'undo') quill.history.undo();
-            if (accion === 'redo') quill.history.redo();
-        }
-
-        // Funciones de inserción
-        function abrirModalTabla() {
+        // --- FUNCIONES DE LA PESTAÑA INSERTAR ---
+        function insertarTablaPrompt() {
             const filas = prompt("Número de filas:", "3");
             const columnas = prompt("Número de columnas:", "3");
             if (filas && columnas) {
-                let htmlTabla = '<table border="1" style="border-collapse: collapse; width: 100%; margin: 10px 0;">';
+                let html = '<table>';
                 for (let i = 0; i < parseInt(filas); i++) {
-                    htmlTabla += '<tr>';
+                    html += '<tr>';
                     for (let j = 0; j < parseInt(columnas); j++) {
-                        htmlTabla += '<td style="border: 1px solid #ccc; padding: 8px; min-width: 50px;">Dato</td>';
+                        html += `<td>Celda ${i+1},${j+1}</td>`;
                     }
-                    htmlTabla += '</tr>';
+                    html += '</tr>';
                 }
-                htmlTabla += '</table><p><br></p>';
-                let range = quill.getSelection(true);
-                quill.clipboard.dangerouslyPasteHTML(range.index, htmlTabla);
+                html += '</table><p><br></p>';
+                document.execCommand('insertHTML', false, html);
             }
         }
 
         function insertarImagenPrompt() {
             const url = prompt("Introduce la URL de la imagen:", "https://placehold.co/400x250/2563eb/ffffff?text=Imagen+Word");
             if (url) {
-                let range = quill.getSelection(true);
-                quill.insertEmbed(range.index, 'image', url);
+                const imgHtml = `<div style="text-align: center; margin: 1rem 0;"><img src="${url}" style="max-width: 100%; border-radius: 4px;" alt="Imagen insertada"></div><p><br></p>`;
+                document.execCommand('insertHTML', false, imgHtml);
             }
         }
 
         function insertarPaginaEnBlanco() {
-            let range = quill.getSelection(true);
-            let saltoHtml = '<div style="page-break-after: always; border-bottom: 2px dashed #cbd5e1; margin: 40px 0; text-align: center; color: #94a3b8;"><span style="background: white; padding: 0 10px; font-size: 12px;">[ Salto de Página ]</span></div><p><br></p>';
-            quill.clipboard.dangerouslyPasteHTML(range.index, saltoHtml);
+            const saltoHtml = '<div style="page-break-after: always; border-bottom: 2px dashed #cbd5e1; margin: 40px 0; text-align: center; color: #94a3b8;"><span style="background: white; padding: 0 10px; font-size: 12px;">[ Salto de Página ]</span></div><p><br></p>';
+            document.execCommand('insertHTML', false, saltoHtml);
         }
 
         function insertarForma(tipo) {
-            let range = quill.getSelection(true);
             let htmlForma = '';
-            if (tipo === 'cuadrado') {
-                htmlForma = '<div class="shape-square">Cuadrado</div><p><br></p>';
+            if (tipo === 'rectangulo') {
+                htmlForma = '<div class="shape-element" style="background:#10b981; color:white; width:150px; height:80px; border-radius:4px; display:inline-flex; align-items:center; justify-content:center; font-weight:bold;">Rectángulo</div>';
             } else if (tipo === 'circulo') {
-                htmlForma = '<div class="shape-circle">Círculo</div><p><br></p>';
+                htmlForma = '<div class="shape-element" style="background:#3b82f6; color:white; width:100px; height:100px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-weight:bold;">Círculo</div>';
             } else if (tipo === 'linea') {
-                htmlForma = '<hr style="border: 1px solid #3b82f6; margin: 20px 0;"><p><br></p>';
-            } else if (tipo === 'cuadro-texto') {
-                htmlForma = '<div class="shape-box"><strong>Cuadro de Texto</strong><p>Escribe notas aquí...</p></div><p><br></p>';
+                htmlForma = '<hr style="border: 2px solid #2563eb; margin: 15px 0;">';
+            } else if (tipo === 'caja') {
+                htmlForma = '<div class="shape-element" style="background:#eff6ff; border:2px dashed #2563eb; padding:15px; border-radius:6px; min-width:200px; text-align:left;"><strong>Cuadro de Texto</strong><p>Escribe aquí...</p></div>';
             }
-            quill.clipboard.dangerouslyPasteHTML(range.index, htmlForma);
+            document.execCommand('insertHTML', false, htmlForma + '<p><br></p>');
         }
 
-        // Funciones de Disposición
+        // --- FUNCIONES DE LA PESTAÑA DISPOSICIÓN ---
         function cambiarOrientacion(ori) {
-            const hoja = document.getElementById('hoja-papel');
-            const btnVert = document.getElementById('btn-ori-vert');
-            const btnHoriz = document.getElementById('btn-ori-horiz');
+            const btnVert = document.getElementById('btn-vert');
+            const btnHoriz = document.getElementById('btn-horiz');
 
             if (ori === 'horizontal') {
                 hoja.style.width = '1056px';
@@ -443,7 +367,6 @@
         }
 
         function cambiarTamanoHoja(tamano) {
-            const hoja = document.getElementById('hoja-papel');
             if (tamano === 'a4') {
                 hoja.style.width = '794px';
                 hoja.style.minHeight = '1123px';
@@ -456,22 +379,35 @@
             }
         }
 
-        function cambiarColumnas(numCols) {
-            const hoja = document.getElementById('hoja-papel');
-            hoja.className = hoja.className.replace(/editor-cols-\d/, `editor-cols-${numCols}`);
+        function cambiarColumnas(num) {
+            hoja.className = hoja.className.replace(/cols-\d/, `cols-${num}`);
         }
 
-        function cambiarSangria(accion) {
-            let range = quill.getSelection();
-            if (range) {
-                let format = quill.getFormat(range);
-                let indentActual = format.indent || 0;
-                if (accion === 'aumentar' && indentActual < 5) {
-                    quill.format('indent', indentActual + 1);
-                } else if (accion === 'disminuir' && indentActual > 0) {
-                    quill.format('indent', indentActual - 1);
-                }
+        // --- ACCESOS RÁPIDOS SUPERIORES ---
+        let zoomActual = 100;
+        function cambiarZoom(delta) {
+            zoomActual += delta;
+            if (zoomActual < 50) zoomActual = 50;
+            if (zoomActual > 200) zoomActual = 200;
+            hoja.style.transform = `scale(${zoomActual / 100})`;
+            document.getElementById('zoomText').innerText = `${zoomActual}%`;
+        }
+
+        function guardarDocumentoManual() {
+            localStorage.setItem('word_documento_html', hoja.innerHTML);
+            alert("¡Documento guardado con éxito en el navegador!");
+        }
+
+        function nuevoDocumento() {
+            if (confirm("¿Deseas crear un nuevo documento en blanco? Se borrará el texto actual si no lo has guardado.")) {
+                hoja.innerHTML = '<p>Escribe tu nuevo documento aquí...</p>';
+                actualizarEstadisticas();
             }
         }
 
-        // Contro
+        function mostrarInfo() {
+            alert("Microsoft Word Web (GitHub Pages)\nDesarrollado con HTML5, Tailwind CSS y JavaScript.");
+        }
+    </script>
+</body>
+</html>
